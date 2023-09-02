@@ -1,6 +1,7 @@
 ################################################################################
 # XDG (wiki.archlinux.org/index.php/XDG_Base_Directory_support)
 ################################################################################
+echo "doing xdg stuff"
 export XDG_CACHE_HOME=$HOME/.cache
 export XDG_CONFIG_HOME=$HOME/.config
 export XDG_DATA_HOME=$HOME/.local/share
@@ -8,16 +9,17 @@ export XDG_STATE_HOME=$HOME/.local/state
 
 ################################################################################
 # Includes
-################################################################################
+################################################################################i
+echo "doing includes"
 if [[ -f $XDG_CONFIG_HOME/includes/secrets.sh ]]; then
   source $XDG_CONFIG_HOME/includes/secrets.sh
 fi
 
-if [[ -f XDG_CONFIG_HOME/includes/aliases.sh ]]; then
+if [[ -f $XDG_CONFIG_HOME/includes/aliases.sh ]]; then
   source $XDG_CONFIG_HOME/includes/aliases.sh
 fi
 
-if [[ -f XDG_CONFIG_HOME/includes/strata.sh ]]; then
+if [[ -f $XDG_CONFIG_HOME/includes/strata.sh ]]; then
   source $XDG_CONFIG_HOME/includes/strata.sh
 fi
 
@@ -59,14 +61,10 @@ setopt HIST_IGNORE_SPACE
 # Preferred editor for local and remote sessions
 export EDITOR='vim'
 
-# NVM
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-
 # for poetry
 export PATH=$PATH:$HOME/.poetry/bin
 export PATH=$HOME/.local/bin:$PATH
 
 # Python
 export PYTHONSTARTUP=$XDG_CONFIG_HOME/.pythonstartup.py
+

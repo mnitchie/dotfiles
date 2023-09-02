@@ -5,7 +5,10 @@ My dotfiles and some setup stuff.
 ## Getting started
 
 This just needs to get executed once per machine
+
 `curl -Lks https://raw.githubusercontent.com/mnitchie/dotfiles/main/bin/setup.sh | /bin/bash`
+
+Then `source $HOME/.config/zsh/zshrc` or restart your terminal
 
 This will clone the repo to `$HOME/.my_dotfiles_git` as a bare repo, but set the home directory to the workdir.
 .zshenv creates a `config` alias that will run all git commands in the bare repo.
@@ -22,6 +25,10 @@ config add .config/redshift.conf
 config commit -m "Add redshift config"
 config push
 ```
+
+## Other scripts
+
+Other scripts in bin/ should be executed after the above is done, as it will assume some things are already set up (like xdg dirs)
 
 ## References
 
