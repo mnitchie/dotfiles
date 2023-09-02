@@ -1,15 +1,4 @@
 ################################################################################
-# Includes
-################################################################################
-if [[ -f $HOME/.config/.secrets.sh ]]; then
-  source $HOME/.config/secrets.sh
-fi
-
-if [[ -f $HOME/.config/.aliases.sh ]]; then
-  source $HOME/.config/aliases.sh
-fi
-
-################################################################################
 # XDG (wiki.archlinux.org/index.php/XDG_Base_Directory_support)
 ################################################################################
 export XDG_CACHE_HOME=$HOME/.cache
@@ -17,8 +6,20 @@ export XDG_CONFIG_HOME=$HOME/.config
 export XDG_DATA_HOME=$HOME/.local/share
 export XDG_STATE_HOME=$HOME/.local/state
 
-# Python
-export PYTHONSTARTUP=$HOME/.pythonrc
+################################################################################
+# Includes
+################################################################################
+if [[ -f $XDG_CONFIG_HOME/includes/secrets.sh ]]; then
+  source $XDG_CONFIG_HOME/includes/secrets.sh
+fi
+
+if [[ -f XDG_CONFIG_HOME/includes/aliases.sh ]]; then
+  source $XDG_CONFIG_HOME/includes/aliases.sh
+fi
+
+if [[ -f XDG_CONFIG_HOME/includes/strata.sh ]]; then
+  source $XDG_CONFIG_HOME/includes/strata.sh
+fi
 
 ################################################################################
 # ZSH
@@ -66,3 +67,6 @@ export NVM_DIR="$HOME/.nvm"
 # for poetry
 export PATH=$PATH:$HOME/.poetry/bin
 export PATH=$HOME/.local/bin:$PATH
+
+# Python
+export PYTHONSTARTUP=$XDG_CONFIG_HOME/.pythonstartup.py
