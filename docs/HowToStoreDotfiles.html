@@ -1,0 +1,248 @@
+<div id="content" class="_content">
+    <div class="tutorial-hero">
+    <div class="g-column g-12-12 text-center">
+    <h1> Dotfiles: Best Way to Store in a Bare Git Repository
+    </h1>
+    </div></div>
+    <div class="g-row">
+    <div class="g-column g-12-12 g-centered">
+    <p>&nbsp;</p> <p><em>Disclaimer: the title is slightly hyperbolic, there are other proven solutions to the problem. I do think the technique below is very elegant though.</em></p>
+    <p>Recently I read about this amazing technique in an&nbsp;<a data-event="clicked" data-uuid="b9ad08bb-3a0" data-event-component="linkButton" data-event-container="richText" data-schema-version="1" data-product-key="bitbucket" data-label="Hacker News thread" data-label-english="Hacker News thread" href="https://news.ycombinator.com/item?id=11070797">Hacker News thread</a>&nbsp;on people's solutions to store their&nbsp;<a data-event="clicked" data-uuid="b9ad08bb-3a1" data-event-component="linkButton" data-event-container="richText" data-schema-version="1" data-product-key="bitbucket" data-label="dotfiles" data-label-english="dotfiles" href="https://en.wikipedia.org/wiki/Dot-file">dotfiles</a>. User&nbsp;<code class="hljs language-undefined">StreakyCobra</code>&nbsp;<a data-event="clicked" data-uuid="b9ad08bb-3a2" data-event-component="linkButton" data-event-container="richText" data-schema-version="1" data-product-key="bitbucket" data-label="showed his elegant setup" data-label-english="showed his elegant setup" href="https://news.ycombinator.com/item?id=11071754">showed his elegant setup</a>&nbsp;and ... It made so much sense! I am in the process of switching my own system to the same technique. The only pre-requisite is to install&nbsp;<a data-event="clicked" data-uuid="b9ad08bb-3a3" data-event-component="linkButton" data-event-container="richText" data-schema-version="1" data-product-key="bitbucket" data-label="Git" data-label-english="Git" href="/git">Git</a>.</p> <p>In his words the technique below requires:</p>
+    <p>No extra tooling, no symlinks, files are tracked on a version control system, you can use different branches for different computers, you can replicate you configuration easily on new installation.</p>
+    <p>The technique consists in storing a&nbsp;<a data-event="clicked" data-uuid="60414dad-7f0" data-event-component="linkButton" data-event-container="richText" data-schema-version="1" data-product-key="bitbucket" data-label="Git bare repository" data-label-english="Git bare repository" href="http://www.saintsjd.com/2011/01/what-is-a-bare-git-repository/">Git bare repository</a>&nbsp;in a "<em>side</em>" folder (like&nbsp;<code class="hljs language-bash"><span class="hljs-variable">$HOME</span>/.cfg</code>&nbsp;or&nbsp;<code class="hljs language-bash"><span class="hljs-variable">$HOME</span>/.myconfig</code>) using a specially crafted alias so that commands are run against that repository and not the usual&nbsp;<code class="hljs language-undefined">.git</code>&nbsp;local folder, which would interfere with any other Git repositories around.</p>
+    <h2 id="installing-git-lfs"> Starting from scratch
+    </h2>
+    <p>If you haven't been tracking your configurations in a Git repository before, you can start using this technique easily with these lines:</p>
+    <div class="component component--codeblock">
+    <pre><code class="hljs language-bash">git&nbsp;init&nbsp;--bare&nbsp;<span class="hljs-variable">$HOME</span>/.cfg
+    <span class="hljs-built_in">alias</span>&nbsp;config=<span class="hljs-string">'/usr/bin/git&nbsp;--git-dir=$HOME/.cfg/&nbsp;--work-tree=$HOME'</span>
+    config&nbsp;config&nbsp;--<span class="hljs-built_in">local</span>&nbsp;status.showUntrackedFiles&nbsp;no
+    <span class="hljs-built_in">echo</span>&nbsp;<span class="hljs-string">"alias&nbsp;config='/usr/bin/git&nbsp;--git-dir=<span class="hljs-variable">$HOME</span>/.cfg/&nbsp;--work-tree=<span class="hljs-variable">$HOME</span>'"</span>&nbsp;&gt;&gt;&nbsp;<span class="hljs-variable">$HOME</span>/.bashrc
+    </code></pre>
+    </div>
+    <script type="text/x-component">
+    {
+    "type":"imkt.components.CodeBlock",
+    "params": {
+    }
+    }
+    </script>
+    <ul> <li>The first line creates a folder&nbsp;<code class="hljs language-bash">~/.cfg</code>&nbsp;which is a&nbsp;<a data-event="clicked" data-uuid="ccebf12a-1b0" data-event-component="linkButton" data-event-container="richText" data-schema-version="1" data-product-key="bitbucket" data-label="Git bare repository" data-label-english="Git bare repository" href="http://www.saintsjd.com/2011/01/what-is-a-bare-git-repository/">Git bare repository</a>&nbsp;that will track our files.</li> <li>Then we create an alias&nbsp;<code class="hljs language-undefined">config</code>&nbsp;which we will use instead of the regular&nbsp;<code class="hljs language-undefined">git</code>&nbsp;when we want to interact with our configuration repository.</li> <li>We set a flag - local to the repository - to hide files we are not explicitly tracking yet. This is so that when you type&nbsp;<code class="hljs language-undefined">config status</code>&nbsp;and other commands later, files you are not interested in tracking will not show up as&nbsp;<code class="hljs language-undefined">untracked</code>.</li> <li>Also you can add the alias definition by hand to your&nbsp;<code class="hljs language-undefined">.bashrc</code>&nbsp;or use the the fourth line provided for convenience.</li> </ul> <p>I packaged the above lines into a&nbsp;<a data-event="clicked" data-uuid="ccebf12a-1b1" data-event-component="linkButton" data-event-container="richText" data-schema-version="1" data-product-key="bitbucket" data-label="snippet" data-label-english="snippet" href="https://bitbucket.org/snippets/nicolapaolucci/ergX9">snippet</a>&nbsp;up on Bitbucket and linked it from a short-url. So that you can set things up with:</p>
+    <div class="component component--codeblock">
+    <pre><code class="hljs language-bash">curl&nbsp;-Lks&nbsp;http://bit.do/cfg-init&nbsp;|&nbsp;/bin/bash</code></pre>
+    </div>
+    <script type="text/x-component">
+    {
+    "type":"imkt.components.CodeBlock",
+    "params": {
+    }
+    }
+    </script>
+    <p>After you've executed the setup any file within the&nbsp;<code class="hljs language-bash"><span class="hljs-variable">$HOME</span></code>&nbsp;folder can be versioned with normal commands, replacing&nbsp;<code class="hljs language-undefined">git</code>&nbsp;with your newly created&nbsp;<code class="hljs language-undefined">config</code>&nbsp;alias, like:</p>
+    <div class="component component--codeblock">
+    <pre><code class="hljs language-bash">config&nbsp;status
+    config&nbsp;add&nbsp;.vimrc
+    config&nbsp;commit&nbsp;-m&nbsp;<span class="hljs-string">"Add&nbsp;vimrc"</span>
+    config&nbsp;add&nbsp;.bashrc
+    config&nbsp;commit&nbsp;-m&nbsp;<span class="hljs-string">"Add&nbsp;bashrc"</span>
+    config&nbsp;push</code></pre>
+    </div>
+    <script type="text/x-component">
+    {
+    "type":"imkt.components.CodeBlock",
+    "params": {
+    }
+    }
+    </script>
+    <h2 id="installing-git-lfs"> Install your dotfiles onto a new system (or migrate to this setup)
+    </h2>
+    <p>If you already store your configuration/dotfiles in a&nbsp;<a data-event="clicked" data-uuid="05fca68b-750" data-event-component="linkButton" data-event-container="richText" data-schema-version="1" data-product-key="bitbucket" data-label="Git repository" data-label-english="Git repository" href="/git">Git repository</a>, on a new system you can migrate to this setup with the following steps:</p> <ul> <li>Prior to the installation make sure you have committed the alias to your&nbsp;<code class="hljs language-undefined">.bashrc</code>&nbsp;or&nbsp;<code class="hljs language-undefined">.zsh</code>:</li> </ul>
+    <div class="component component--codeblock">
+    <pre><code class="hljs language-bash"><span class="hljs-built_in">alias</span>&nbsp;config=<span class="hljs-string">'/usr/bin/git&nbsp;--git-dir=$HOME/.cfg/&nbsp;--work-tree=$HOME'</span>
+    </code></pre>
+    </div>
+    <script type="text/x-component">
+    {
+    "type":"imkt.components.CodeBlock",
+    "params": {
+    }
+    }
+    </script>
+    <ul> <li>And that your source repository ignores the folder where you'll clone it, so that you don't create weird recursion problems:</li> </ul>
+    <div class="component component--codeblock">
+    <pre><code class="hljs language-bash"><span class="hljs-built_in">echo</span>&nbsp;<span class="hljs-string">".cfg"</span>&nbsp;&gt;&gt;&nbsp;.gitignore
+    </code></pre>
+    </div>
+    <script type="text/x-component">
+    {
+    "type":"imkt.components.CodeBlock",
+    "params": {
+    }
+    }
+    </script>
+    <ul> <li>Now clone your dotfiles into a&nbsp;<a data-event="clicked" data-uuid="0b08395c-430" data-event-component="linkButton" data-event-container="richText" data-schema-version="1" data-product-key="bitbucket" data-label="bare" data-label-english="bare" href="http://www.saintsjd.com/2011/01/what-is-a-bare-git-repository/">bare</a>&nbsp;repository in a&nbsp;"<em>dot</em>"&nbsp;folder of your&nbsp;<code class="hljs language-bash"><span class="hljs-variable">$HOME</span></code>:</li> </ul>
+    <div class="component component--codeblock">
+    <pre><code class="hljs language-bash">git&nbsp;<span class="hljs-built_in">clone</span>&nbsp;--bare&nbsp;&lt;git-repo-url&gt;&nbsp;<span class="hljs-variable">$HOME</span>/.cfg
+    </code></pre>
+    </div>
+    <script type="text/x-component">
+    {
+    "type":"imkt.components.CodeBlock",
+    "params": {
+    }
+    }
+    </script>
+    <ul> <li>Define the alias in the current shell scope:</li> </ul>
+    <div class="component component--codeblock">
+    <pre><code class="hljs language-bash"><span class="hljs-built_in">alias</span>&nbsp;config=<span class="hljs-string">'/usr/bin/git&nbsp;--git-dir=$HOME/.cfg/&nbsp;--work-tree=$HOME'</span>
+    </code></pre>
+    </div>
+    <script type="text/x-component">
+    {
+    "type":"imkt.components.CodeBlock",
+    "params": {
+    }
+    }
+    </script>
+    <ul> <li>Checkout the actual content from the bare repository to your&nbsp;<code class="hljs language-bash"><span class="hljs-variable">$HOME</span></code>:</li> </ul>
+    <div class="component component--codeblock">
+    <pre><code class="hljs language-undefined">config&nbsp;checkout</code></pre>
+    </div>
+    <script type="text/x-component">
+    {
+    "type":"imkt.components.CodeBlock",
+    "params": {
+    }
+    }
+    </script>
+    <ul> <li>The step above might fail with a message like:</li> </ul>
+    <div class="component component--codeblock">
+    <pre><code class="hljs language-js"><span class="hljs-attr">error</span>:&nbsp;<span class="hljs-title class_">The</span>&nbsp;following&nbsp;untracked&nbsp;working&nbsp;tree&nbsp;files&nbsp;would&nbsp;be&nbsp;overwritten&nbsp;by&nbsp;<span class="hljs-attr">checkout</span>:
+    &nbsp;&nbsp;&nbsp;&nbsp;.<span class="hljs-property">bashrc</span>
+    &nbsp;&nbsp;&nbsp;&nbsp;.<span class="hljs-property">gitignore</span>
+    <span class="hljs-title class_">Please</span>&nbsp;move&nbsp;or&nbsp;remove&nbsp;them&nbsp;before&nbsp;you&nbsp;can&nbsp;<span class="hljs-keyword">switch</span>&nbsp;branches.
+    <span class="hljs-title class_">Aborting</span>
+    </code></pre>
+    </div>
+    <script type="text/x-component">
+    {
+    "type":"imkt.components.CodeBlock",
+    "params": {
+    }
+    }
+    </script>
+    <p>This is because your&nbsp;<code class="hljs language-bash"><span class="hljs-variable">$HOME</span></code>&nbsp;folder might already have some stock configuration files which would be overwritten by Git. The solution is simple: back up the files if you care about them, remove them if you don't care. I provide you with a possible rough shortcut to move all the offending files automatically to a backup folder:</p>
+    <div class="component component--codeblock">
+    <pre><code class="hljs language-bash"><span class="hljs-built_in">mkdir</span>&nbsp;-p&nbsp;.config-backup&nbsp;&amp;&amp;&nbsp;\
+    config&nbsp;checkout&nbsp;2&gt;&amp;1&nbsp;|&nbsp;egrep&nbsp;<span class="hljs-string">"\s+\."</span>&nbsp;|&nbsp;awk&nbsp;{<span class="hljs-string">'print&nbsp;$1'</span>}&nbsp;|&nbsp;\
+    xargs&nbsp;-I{}&nbsp;<span class="hljs-built_in">mv</span>&nbsp;{}&nbsp;.config-backup/{}
+    </code></pre>
+    </div>
+    <script type="text/x-component">
+    {
+    "type":"imkt.components.CodeBlock",
+    "params": {
+    }
+    }
+    </script>
+    <ul> <li>Re-run the check out if you had problems:</li> </ul>
+    <div class="component component--codeblock">
+    <pre><code class="hljs language-undefined">config&nbsp;checkout</code></pre>
+    </div>
+    <script type="text/x-component">
+    {
+    "type":"imkt.components.CodeBlock",
+    "params": {
+    }
+    }
+    </script>
+    <ul> <li>Set the flag&nbsp;<code class="hljs language-undefined">showUntrackedFiles</code>&nbsp;to&nbsp;<code class="hljs language-yml"><span class="hljs-literal">no</span></code>&nbsp;on this specific (local) repository:</li> </ul>
+    <div class="component component--codeblock">
+    <pre><code class="hljs language-bash">config&nbsp;config&nbsp;--<span class="hljs-built_in">local</span>&nbsp;status.showUntrackedFiles&nbsp;no
+    </code></pre>
+    </div>
+    <script type="text/x-component">
+    {
+    "type":"imkt.components.CodeBlock",
+    "params": {
+    }
+    }
+    </script>
+    <ul> <li>You're done, from now on you can now type&nbsp;<code class="hljs language-undefined">config</code>&nbsp;commands to add and update your dotfiles:</li> </ul>
+    <div class="component component--codeblock">
+    <pre><code class="hljs language-bash">config&nbsp;status
+    config&nbsp;add&nbsp;.vimrc
+    config&nbsp;commit&nbsp;-m&nbsp;<span class="hljs-string">"Add&nbsp;vimrc"</span>
+    config&nbsp;add&nbsp;.bashrc
+    config&nbsp;commit&nbsp;-m&nbsp;<span class="hljs-string">"Add&nbsp;bashrc"</span>
+    config&nbsp;push
+    </code></pre>
+    </div>
+    <script type="text/x-component">
+    {
+    "type":"imkt.components.CodeBlock",
+    "params": {
+    }
+    }
+    </script>
+    <p>Again as a shortcut not to have to remember all these steps on any new machine you want to setup, you can create a simple script,&nbsp;<a data-event="clicked" data-uuid="a253817e-a40" data-event-component="linkButton" data-event-container="richText" data-schema-version="1" data-product-key="bitbucket" data-label="store it as Bitbucket snippet" data-label-english="store it as Bitbucket snippet" href="https://bitbucket.org/snippets/nicolapaolucci/7rE9K">store it as Bitbucket snippet</a>&nbsp;like I did,&nbsp;<a data-event="clicked" data-uuid="a253817e-a41" data-event-component="linkButton" data-event-container="richText" data-schema-version="1" data-product-key="bitbucket" data-label="create a short url" data-label-english="create a short url" href="http://bit.do/">create a short url</a>&nbsp;for it and call it like this:</p>
+    <div class="component component--codeblock">
+    <pre><code class="hljs language-bash">curl&nbsp;-Lks&nbsp;http://bit.do/cfg-install&nbsp;|&nbsp;/bin/bash
+    </code></pre>
+    </div>
+    <script type="text/x-component">
+    {
+    "type":"imkt.components.CodeBlock",
+    "params": {
+    }
+    }
+    </script>
+    <p>For completeness this is what I ended up with (tested on many freshly minted&nbsp;<a data-event="clicked" data-uuid="e61989a4-a00" data-event-component="linkButton" data-event-container="richText" data-schema-version="1" data-product-key="bitbucket" data-label="Alpine Linux" data-label-english="Alpine Linux" href="http://www.alpinelinux.org/">Alpine Linux</a>&nbsp;containers to test it out):</p>
+    <div class="component component--codeblock">
+    <pre><code class="hljs language-bash">git&nbsp;<span class="hljs-built_in">clone</span>&nbsp;--bare&nbsp;https://bitbucket.org/durdn/cfg.git&nbsp;<span class="hljs-variable">$HOME</span>/.cfg
+    <span class="hljs-keyword">function</span>&nbsp;config&nbsp;{
+    &nbsp;&nbsp;&nbsp;/usr/bin/git&nbsp;--git-dir=<span class="hljs-variable">$HOME</span>/.cfg/&nbsp;--work-tree=<span class="hljs-variable">$HOME</span>&nbsp;<span class="hljs-variable">$@</span>
+    }
+    <span class="hljs-built_in">mkdir</span>&nbsp;-p&nbsp;.config-backup
+    config&nbsp;checkout
+    <span class="hljs-keyword">if</span>&nbsp;[&nbsp;$?&nbsp;=&nbsp;0&nbsp;];&nbsp;<span class="hljs-keyword">then</span>
+    &nbsp;&nbsp;<span class="hljs-built_in">echo</span>&nbsp;<span class="hljs-string">"Checked&nbsp;out&nbsp;config."</span>;
+    &nbsp;&nbsp;<span class="hljs-keyword">else</span>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="hljs-built_in">echo</span>&nbsp;<span class="hljs-string">"Backing&nbsp;up&nbsp;pre-existing&nbsp;dot&nbsp;files."</span>;
+    &nbsp;&nbsp;&nbsp;&nbsp;config&nbsp;checkout&nbsp;2&gt;&amp;1&nbsp;|&nbsp;egrep&nbsp;<span class="hljs-string">"\s+\."</span>&nbsp;|&nbsp;awk&nbsp;{<span class="hljs-string">'print&nbsp;$1'</span>}&nbsp;|&nbsp;xargs&nbsp;-I{}&nbsp;<span class="hljs-built_in">mv</span>&nbsp;{}&nbsp;.config-backup/{}
+    <span class="hljs-keyword">fi</span>;
+    config&nbsp;checkout
+    config&nbsp;config&nbsp;status.showUntrackedFiles&nbsp;no
+    </code></pre>
+    </div>
+    <script type="text/x-component">
+    {
+    "type":"imkt.components.CodeBlock",
+    "params": {
+    }
+    }
+    </script>
+    <h2> Wrapping up
+    </h2>
+    <p>I hope you find this technique useful to track your configuration. If you're curious,&nbsp;<a data-event="clicked" data-uuid="f0ce43f5-480" data-event-component="linkButton" data-event-container="richText" data-schema-version="1" data-product-key="bitbucket" data-label="my dotfiles live here" data-label-english="my dotfiles live here" href="https://bitbucket.org/durdn/cfg.git">my dotfiles live here</a>. Also please do stay connected by following&nbsp;<a data-event="clicked" data-uuid="f0ce43f5-481" data-event-component="linkButton" data-event-container="richText" data-schema-version="1" data-product-key="bitbucket" data-label="@durdn" data-label-english="@durdn" href="https://www.twitter.com/durdn">@durdn</a>&nbsp;or my awesome team at&nbsp;<a data-event="clicked" data-uuid="f0ce43f5-482" data-event-component="linkButton" data-event-container="richText" data-schema-version="1" data-product-key="bitbucket" data-label="@atlassiandev" data-label-english="@atlassiandev" href="https://www.twitter.com/atlassiandev">@atlassiandev</a>.</p>
+    </div></div>
+    <div id="related-post-sidebar" class="related-post">
+    <div class="related-post--text">
+    <p>Ready to learn Git?</p> <p>Try this interactive tutorial.</p>
+    </div>
+    <a href="/git/tutorials/learn-git-with-bitbucket-cloud" class="button green-solid standard related-post--link">Get started now</a>
+    </div>
+    <div class="_footer">
+    <div class="g-column g-6-12 g-centered">
+    <div class="_hero">
+    <img src="https://wac-cdn.atlassian.com/dam/jcr:dff99252-7ef3-446e-88c3-7a5938d05274/git%20cherry%20pick%20illo.png?cdnVersion=1191" loading="lazy" alt="Git cherry pick illo" width="150px" height="150px">
+    </div>
+    <h5> Next up:
+    </h5>
+    <h4> Git Cherry Pick
+    </h4>
+    <a href="/git/tutorials/cherry-pick" class="cms-link cms-link--text">Start next tutorial</a>
+    </div></div>
+    </div>
+
+    <link rel="stylesheet" href="./styles.css" />

@@ -1,0 +1,20 @@
+[credential]
+	helper = osxkeychain
+[user]
+	name = Mike Nitchie
+    email = mikenitchie@gmail.com
+	signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIHm7tQsMiCuw/rH+QPXwJ925mPWvSru9vHATKqz2T7n
+[includeIf "gitdir:~/git/strata/"]
+    path = ~/git/strata/.gitconfig
+[gpg]
+	format = ssh
+[gpg "ssh"]
+	program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
+[commit]
+	gpgsign = true
+[push]
+	autoSetupRemote = true
+[pull]
+    rebase = true
+[init]
+	defaultBranch = main
