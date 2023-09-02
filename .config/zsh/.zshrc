@@ -1,12 +1,12 @@
 ################################################################################
 # Includes
 ################################################################################
-if [[ -f ~/.secrets.sh ]]; then
-  source ~/.secrets.sh
+if [[ -f $HOME/.config/.secrets.sh ]]; then
+  source $HOME/.config/secrets.sh
 fi
 
-if [[ -f ~/.aliases.sh ]]; then
-  source ~/.aliases.sh
+if [[ -f $HOME/.config/.aliases.sh ]]; then
+  source $HOME/.config/aliases.sh
 fi
 
 ################################################################################
