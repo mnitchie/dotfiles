@@ -1,4 +1,4 @@
-git clone --bare git@github.com:mnitchie/dotfiles.git $HOME/.my_dotfiles_git
+git clone --bare https://github.com/mnitchie/dotfiles.git $HOME/.my_dotfiles_git
 function config {
    /usr/bin/git --git-dir=$HOME/.my_dotfiles_git --work-tree=$HOME $@
 }
