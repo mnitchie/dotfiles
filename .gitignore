@@ -1,3 +1,7 @@
 secrets.sh
 .secrets.sh
 .secretsrc
+
+# Gitignore the directory that this will be cloned to, to avoid weird recursion issues
+# since we are setting the working dir to the parent of the dir
+.my_dotfiles_git
