@@ -2,6 +2,10 @@
 
 My dotfiles and some setup stuff.
 
+## Getting started
+
+
+
 ## References
 
 1. https://www.atlassian.com/git/tutorials/dotfiles
