@@ -23,3 +23,9 @@ aws --version
 
 echo "Install AWS Vault"
 brew install --cask aws-vault
+
+echo "Install gh cli"
+brew install gh
+
+echo "Installing jq"
+brew install jq
