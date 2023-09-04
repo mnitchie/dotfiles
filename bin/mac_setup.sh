@@ -14,3 +14,12 @@ cd fonts
 # clean-up a bit
 cd ..
 rm -rf fonts
+
+echo "Installing aws cli"
+curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"
+sudo installer -pkg AWSCLIV2.pkg -target /
+which aws
+aws --version
+
+echo "Install AWS Vault"
+brew install --cask aws-vault

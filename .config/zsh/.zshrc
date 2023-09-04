@@ -46,6 +46,10 @@ source $ZSH/oh-my-zsh.sh
 # Remove the username@host prefix from the agnoster prompt
 prompt_context(){}
 
+# Remove the aws prompt info stuff on the right side of the terminal
+# https://github.com/ohmyzsh/ohmyzsh/discussions/10726#discussioncomment-2252630
+aws_prompt_info(){}
+
 # .oh-my-zsh/lib/misc.zsh sets the pager to something I don't want. Set it back to the default
 export PAGER=less
 unset LESS
