@@ -26,9 +26,21 @@ config commit -m "Add redshift config"
 config push
 ```
 
+## Secrets and environment variables
+When needed, export secrets in .config/includes/secrets.sh, which is `source`d in `.zshrc`. Never check the secrets file in
+
 ## Other scripts
 
 Other scripts in bin/ should be executed after the above is done, as it will assume some things are already set up (like xdg dirs)
+
+## Other setup
+
+### AWS Vault
+https://github.com/99designs/aws-vault
+
+Open the keychain, File -> Add Keychain, aws-vault.keychain.db (or something)
+https://github.com/99designs/aws-vault/issues/534#issuecomment-596971986
+https://github.com/99designs/aws-vault/issues/534#issuecomment-596578706
 
 ## References
 
