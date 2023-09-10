@@ -11,3 +11,9 @@ alias catz='cat $XDG_CONFIG_HOME/zsh/.zshrc'
 
 # https://github.com/mnitchie/python_sandbox
 alias pythond='docker run -it --rm --name python_sandbox python_sandbox bash'
+
+# file system navigation
+alias cdp='cd ~/git/strata/portal'
+alias cdl='cd ~/git/strata/lab-ui'
+alias cdsrda='cd ~/git/strata/strata-request-data-api'
+alias cdevents='cd ~/git/strata/strata-events'

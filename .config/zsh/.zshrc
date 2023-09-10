@@ -7,7 +7,6 @@
 ################################################################################
 # XDG (wiki.archlinux.org/index.php/XDG_Base_Directory_support)
 ################################################################################
-echo "doing xdg stuff"
 export XDG_CACHE_HOME=$HOME/.cache
 export XDG_CONFIG_HOME=$HOME/.config
 export XDG_DATA_HOME=$HOME/.local/share
@@ -16,7 +15,6 @@ export XDG_STATE_HOME=$HOME/.local/state
 ################################################################################
 # Includes
 ################################################################################i
-echo "doing includes"
 if [[ -f $XDG_CONFIG_HOME/includes/secrets.sh ]]; then
   source $XDG_CONFIG_HOME/includes/secrets.sh
 fi

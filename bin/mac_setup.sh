@@ -29,3 +29,6 @@ brew install gh
 
 echo "Installing jq"
 brew install jq
+
+echo "Installing pre-commit"
+brew install pre-commit
