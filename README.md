@@ -8,10 +8,16 @@ This just needs to get executed once per machine
 
 `curl -Lks https://raw.githubusercontent.com/mnitchie/dotfiles/main/bin/setup.sh | /bin/bash`
 
-Then `source $HOME/.config/zsh/zshrc` or restart your terminal
-
 This will clone the repo to `$HOME/.my_dotfiles_git` as a bare repo, but set the home directory to the workdir.
 .zshenv creates a `config` alias that will run all git commands in the bare repo.
+
+## Other scripts
+
+Other scripts in bin/ should be executed after the above is done, as it will assume some things are already set up (like xdg dirs). If you're on a mac, for instance, run `./bin/mac_setup.sh`. For wsl, run `./bin/wsl_setup.sh`
+
+## And then
+
+Then `source $HOME/.config/zsh/.zshrc` or restart your terminal
 
 ## Usage
 
@@ -28,12 +34,6 @@ config push
 
 ## Secrets and environment variables
 When needed, export secrets in .config/includes/secrets.sh, which is `source`d in `.zshrc`. Never check the secrets file in
-
-## Other scripts
-
-Other scripts in bin/ should be executed after the above is done, as it will assume some things are already set up (like xdg dirs)
-
-## Other setup
 
 ### AWS Vault
 https://github.com/99designs/aws-vault
