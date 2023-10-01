@@ -3,13 +3,17 @@
 [user]
 	name = Mike Nitchie
     email = mikenitchie@gmail.com
-    signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKgUUi7EjbMsWX5WTSZ3r3oDhoP0rHIuKYKoox7sZTHt
+	signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHZItfI9xDfprMpb1fsAgp+6PDaxbds/CNSKgKiZ+5dl
 [includeIf "gitdir:~/git/strata/"]
     path = ~/git/strata/.gitconfig
+	signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKgUUi7EjbMsWX5WTSZ3r3oDhoP0rHIuKYKoox7sZTHt
 [gpg]
 	format = ssh
 [gpg "ssh"]
-	program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
+    # Work
+	# program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
+    # Personal
+	program = "/mnt/c/Users/Michael Nitchie/AppData/Local/1Password/app/8/op-ssh-sign.exe"
 [commit]
 	gpgsign = true
 [push]
