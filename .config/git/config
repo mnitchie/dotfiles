@@ -1,7 +1,6 @@
 [credential]
 	# Git will use the first one that works.
 	helper = osxkeychain
-	helper = wincred
 [user]
 	name = Mike Nitchie
     email = mikenitchie@gmail.com

@@ -27,6 +27,10 @@ if [[ -f $XDG_CONFIG_HOME/includes/strata.sh ]]; then
   source $XDG_CONFIG_HOME/includes/strata.sh
 fi
 
+if [[ "$(uname)" == "Linux" ]]; then
+  source $XDG_CONFIG_HOME/includes/linux.sh
+fi
+
 ################################################################################
 # ZSH
 ################################################################################
