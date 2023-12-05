@@ -32,3 +32,16 @@ brew install jq
 
 echo "Installing pre-commit"
 brew install pre-commit
+
+echo "Installing tree"
+brew install tree
+
+echo "Installing bat"
+brew install bat
+
+echo "Installing pyenv"
+brew install pyenv
+
+echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.zshrc
+echo 'command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.zshrc
+echo 'eval "$(pyenv init -)"' >> ~/.zshrc

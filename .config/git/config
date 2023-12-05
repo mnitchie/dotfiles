@@ -12,9 +12,9 @@
 	format = ssh
 [gpg "ssh"]
     # Work
-	# program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
+	program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
     # Personal
-	program = "/mnt/c/Users/Michael Nitchie/AppData/Local/1Password/app/8/op-ssh-sign.exe"
+	# program = "/mnt/c/Users/Michael Nitchie/AppData/Local/1Password/app/8/op-ssh-sign.exe"
 [commit]
 	gpgsign = true
 [push]

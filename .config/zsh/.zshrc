@@ -80,3 +80,9 @@ export PATH=$HOME/.local/bin:$PATH
 # Python
 export PYTHONSTARTUP=$XDG_CONFIG_HOME/.pythonstartup.py
 
+################################################################################
+# Pyenv setup
+################################################################################
+export PYENV_ROOT="$XDG_CONFIG_HOME/.pyenv"
+command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
