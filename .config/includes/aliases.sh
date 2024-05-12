@@ -23,3 +23,8 @@ alias cdpath='cd ~/git/strata/pathology-review'
 # See mnitchie/python_sandbox
 alias python-sandbox-vanilla='docker run -it --rm -v $(pwd):/usr/src/app python_sandbox_vanilla bash'
 alias python-sandbox-jupyter='docker run -it --rm -v $(pwd):/usr/src/app -p 8888:8888 python_sandbox_jupyter'
+
+# git
+function gitacp() {
+    git add --all && git commit -m "$1" && git push
+}

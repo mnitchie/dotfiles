@@ -86,3 +86,38 @@ export PYTHONSTARTUP=$XDG_CONFIG_HOME/.pythonstartup.py
 export PYENV_ROOT="$XDG_CONFIG_HOME/.pyenv"
 command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
+
+################################################################################
+# Set up aws-vault prompt info. when you do aws-vault exec <profile> --duration=<>
+# It will show the active profile and the remaining duration of the session
+################################################################################
+
+# Overrides the `prompt_aws` function from the agnoster theme.
+# Identical, but it also accounts for the `cleardata` profile
+prompt_aws() {
+  [[ -z "$AWS_PROFILE" || "$SHOW_AWS_PROMPT" = false ]] && return
+  case "$AWS_PROFILE" in
+    *-prod|*production*|cleardata) prompt_segment red yellow  "AWS: ${AWS_PROFILE:gs/%/%%}" ;;
+    *) prompt_segment green black "AWS: ${AWS_PROFILE:gs/%/%%}" ;;
+  esac
+}
+
+function aws_vault_prompt_info() {
+  local profile=$AWS_VAULT
+  local expiration=$AWS_CREDENTIAL_EXPIRATION
+
+  if [[ -n $profile && -n $expiration ]]; then
+    local now=$(date -u +%s)
+    local exp=$(date -j -u -f "%Y-%m-%dT%H:%M:%SZ" "$expiration" +%s)
+    local remaining=$((exp - now))
+    local hours=$((remaining / 3600))
+    local minutes=$(((remaining % 3600) / 60))
+
+    case "$profile" in
+      *-prod|*production*|cleardata) prompt_segment red yellow "AWS:$profile ($hours:$minutes left)" ;;
+      *) prompt_segment green black "$profile ($hours:$minutes left)" ;;
+    esac
+  fi
+}
+
+PROMPT='$(aws_vault_prompt_info)'$PROMPT
