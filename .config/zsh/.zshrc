@@ -11,6 +11,7 @@ export XDG_CACHE_HOME=$HOME/.cache
 export XDG_CONFIG_HOME=$HOME/.config
 export XDG_DATA_HOME=$HOME/.local/share
 export XDG_STATE_HOME=$HOME/.local/state
+export XDG_BIN_HOME=$HOME/.local/bin
 
 ################################################################################
 # Includes
@@ -73,19 +74,8 @@ setopt HIST_IGNORE_SPACE
 # Preferred editor for local and remote sessions
 export EDITOR='vim'
 
-# for poetry
-export PATH=$PATH:$HOME/.poetry/bin
-export PATH=$HOME/.local/bin:$PATH
-
 # Python
 export PYTHONSTARTUP=$XDG_CONFIG_HOME/.pythonstartup.py
-
-################################################################################
-# Pyenv setup
-################################################################################
-export PYENV_ROOT="$XDG_CONFIG_HOME/.pyenv"
-command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init -)"
 
 ################################################################################
 # Set up aws-vault prompt info. when you do aws-vault exec <profile> --duration=<>
@@ -122,11 +112,11 @@ function aws_vault_prompt_info() {
 
 PROMPT='$(aws_vault_prompt_info)'$PROMPT
 
-################################################################################
-# Needed for psycopg2: https://sebacode.medium.com/install-psycopg2-en-apple-m1-c254aaf3f3d9
-################################################################################
-export LDFLAGS="-L/opt/homebrew/opt/openssl@3/lib"
-export CPPFLAGS="-I/opt/homebrew/opt/openssl@3/include"
+# ################################################################################
+# # Needed for psycopg2: https://sebacode.medium.com/install-psycopg2-en-apple-m1-c254aaf3f3d9
+# ################################################################################
+# export LDFLAGS="-L/opt/homebrew/opt/openssl@3/lib"
+# export CPPFLAGS="-I/opt/homebrew/opt/openssl@3/include"
 
 #######
 # 1password ssh hackery
@@ -136,3 +126,9 @@ export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agen
 export NVM_DIR="$HOME/.config/nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+. "$HOME/.local/share/../bin/env"
+
+# WeasyPrint library paths (added by setup_macos.sh)
+export PKG_CONFIG_PATH="/opt/homebrew/lib/pkgconfig:/opt/homebrew/share/pkgconfig:$PKG_CONFIG_PATH"
+export DYLD_FALLBACK_LIBRARY_PATH="/opt/homebrew/lib:$DYLD_FALLBACK_LIBRARY_PATH"
