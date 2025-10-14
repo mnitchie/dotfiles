@@ -121,3 +121,18 @@ function aws_vault_prompt_info() {
 }
 
 PROMPT='$(aws_vault_prompt_info)'$PROMPT
+
+################################################################################
+# Needed for psycopg2: https://sebacode.medium.com/install-psycopg2-en-apple-m1-c254aaf3f3d9
+################################################################################
+export LDFLAGS="-L/opt/homebrew/opt/openssl@3/lib"
+export CPPFLAGS="-I/opt/homebrew/opt/openssl@3/include"
+
+#######
+# 1password ssh hackery
+#####
+export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
+
+export NVM_DIR="$HOME/.config/nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
