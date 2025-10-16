@@ -6,9 +6,13 @@ alias tree=tree -C
 alias sqlite3='sqlite3 -init $XDG_CONFIG_HOME/.sqliterc'
 
 # Niceties for poking at the .zshrc file
-alias sourcez='source $XDG_CONFIG_HOME/zsh/.zshrc'
-alias vimz='vim $XDG_CONFIG_HOME/zsh/.zshrc'
-alias catz='cat $XDG_CONFIG_HOME/zsh/.zshrc'
+ZSHRC=$XDG_CONFIG_HOME/zsh/.zshrc
+alias sourcez='source $ZSHRC'
+alias vimz='vim $ZSHRC'
+alias catz='cat $ZSHRC'
+alias headz='head $ZSHRC'
+alias tailz='tail $ZSHRC'
+alias cursorz='cursor $ZSHRC'
 
 # https://github.com/mnitchie/python_sandbox
 alias pythond='docker run -it --rm --name python_sandbox python_sandbox bash'

@@ -129,6 +129,7 @@ export NVM_DIR="$HOME/.config/nvm"
 
 . "$HOME/.local/share/../bin/env"
 
-# WeasyPrint library paths (added by setup_macos.sh)
-export PKG_CONFIG_PATH="/opt/homebrew/lib/pkgconfig:/opt/homebrew/share/pkgconfig:$PKG_CONFIG_PATH"
-export DYLD_FALLBACK_LIBRARY_PATH="/opt/homebrew/lib:$DYLD_FALLBACK_LIBRARY_PATH"
+# Python niceties
+export PYTHONDONTWRITEBYTECODE=1
+export PYTHONUNBUFFERED=1
+eval "$(uv generate-shell-completion zsh)"
