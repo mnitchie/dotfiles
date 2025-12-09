@@ -76,6 +76,7 @@ export EDITOR='vim'
 
 # Python
 export PYTHONSTARTUP=$XDG_CONFIG_HOME/.pythonstartup.py
+export IPYTHONDIR=$XDG_CONFIG_HOME/ipython
 
 ################################################################################
 # Set up aws-vault prompt info. when you do aws-vault exec <profile> --duration=<>

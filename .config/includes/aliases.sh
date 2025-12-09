@@ -14,8 +14,8 @@ alias headz='head $ZSHRC'
 alias tailz='tail $ZSHRC'
 alias cursorz='cursor $ZSHRC'
 
-# https://github.com/mnitchie/python_sandbox
-alias pythond='docker run -it --rm --name python_sandbox python_sandbox bash'
+# uv stuff
+alias manage='uv run python manage.py'
 
 # file system navigation
 alias cdp='cd ~/git/strata/portal'
@@ -25,6 +25,8 @@ alias cdevents='cd ~/git/strata/strata-events'
 alias cdpath='cd ~/git/strata/pathology-review'
 
 # See mnitchie/python_sandbox
+# https://github.com/mnitchie/python_sandbox
+alias pythond='docker run -it --rm --name python_sandbox python_sandbox bash'
 alias python-sandbox-vanilla='docker run -it --rm -v $(pwd):/usr/src/app python_sandbox_vanilla bash'
 alias python-sandbox-jupyter='docker run -it --rm -v $(pwd):/usr/src/app -p 8888:8888 python_sandbox_jupyter'
 
