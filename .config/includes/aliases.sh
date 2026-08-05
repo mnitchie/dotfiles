@@ -34,3 +34,6 @@ alias python-sandbox-jupyter='docker run -it --rm -v $(pwd):/usr/src/app -p 8888
 function gitacp() {
     git add --all && git commit -m "$1" && git push
 }
+
+# Pretty file display
+alias csv="sed 's/,/ ,/g' | column -t -s ',' | less -S"
