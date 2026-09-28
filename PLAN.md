@@ -53,8 +53,10 @@ These are fixed for every task. Changing one is a plan change, not a task decisi
    the rest from there. No oh-my-zsh. The prompt is Starship.
 8. **Secrets come from 1Password or stay on the machine.** Nothing secret is
    committed. A template may call `onepasswordRead` when a file needs a secret.
-   `~/.config/zsh/local.zsh` and `~/.config/git/local` are sourced or included if
-   they exist and are never managed by chezmoi.
+   `~/.config/zsh/local.zsh`, `~/.config/git/local`, and `~/.ssh/config.local`
+   are sourced or included if they exist and are never managed by chezmoi. On WSL,
+   ssh host entries go in the Windows `%USERPROFILE%\.ssh\config`, because `ssh`
+   and git use Windows `ssh.exe` there.
 9. **The repo stays public.** Every task assumes anyone can read it.
 10. **Store what you wrote, fetch what you didn't.** Upstream content (skills,
     plugins, themes) comes from Homebrew or `.chezmoiexternal.toml`, never pasted
@@ -384,8 +386,9 @@ Replace nvm with `fnm`. Drop the Powerline fonts clone.
    the 1Password CLI on Linux; if Homebrew can't, add a per-platform install step
    and say why.
 2. `run_once_before_00-install-homebrew.sh.tmpl`: on `linux` and `wsl`, install
-   the apt list; then install Homebrew with `NONINTERACTIVE=1` if
-   `{{ .brewPrefix }}/bin/brew` does not exist.
+   the apt list (plus `fontconfig` on a Linux desktop); then, on every platform,
+   install Homebrew with `NONINTERACTIVE=1` if `{{ .brewPrefix }}/bin/brew` does
+   not exist.
 3. `run_onchange_before_10-install-packages.sh.tmpl`: `eval` the output of
    `{{ .brewPrefix }}/bin/brew shellenv`, then run `brew bundle` on a Brewfile
    generated inline from `packages.yaml`, so the script's content, and therefore
@@ -404,7 +407,8 @@ Replace nvm with `fnm`. Drop the Powerline fonts clone.
 
 **Done when:** `scripts/test.sh` passes, and in the harness's rendered scripts
 (`scripts/test.sh --keep`), the darwin package script contains casks while the
-Linux ones do not, and the darwin Homebrew install script renders empty.
+Linux ones do not, and the darwin Homebrew install script installs Homebrew but
+runs no apt commands.
 
 ---
 
@@ -674,7 +678,8 @@ rendered output has `.agents/skills/gh-stack/SKILL.md` in every profile, no
 `--branch <name>` for trying a branch before merging; daily operations (`edit`,
 `diff`, `apply`, `update`, `re-add`, `chezmoi cd`) linked to the chezmoi docs; how
 to add a package; how to add a file for one platform; the work config and
-`_<company>.zsh` convention; where secrets and local overrides go; setting the
+`_<company>.zsh` convention; where secrets and local overrides go (all three local
+files from decision 8, and the WSL ssh config location); setting the
 terminal font on each platform, including installing JetBrainsMono Nerd Font on
 Windows for WSL (see "Nerd Font"); and how to run `scripts/test.sh`. No long
 background section.
