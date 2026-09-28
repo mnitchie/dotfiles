@@ -87,10 +87,27 @@ paths and do not export variables themselves.
 | less history | `$XDG_STATE_HOME/less/history` | `LESSHISTFILE` |
 | npm | `~/.config/npm/npmrc`, `$XDG_CACHE_HOME/npm` | `NPM_CONFIG_USERCONFIG`, `NPM_CONFIG_CACHE` |
 | fnm | `$XDG_DATA_HOME/fnm` | `FNM_DIR` (verify fnm's default first; set it only if it differs) |
-| pnpm | `$XDG_DATA_HOME/pnpm` | `PNPM_HOME`, also on `PATH` |
+| Fonts (Linux desktop) | `$XDG_DATA_HOME/fonts/` | native (fontconfig) |
 
 These stay in `$HOME` because the tools or other programs hard-code them:
-`~/.zshenv`, `~/.ssh`, `~/.aws`, `~/.cursor`, `~/.agents`.
+`~/.zshenv`, `~/.ssh`, `~/.aws`, `~/.agents`.
+
+## Nerd Font
+
+The Starship prompt uses Nerd Font symbols. The font is **JetBrainsMono Nerd
+Font** (<https://www.nerdfonts.com/>). It has to be installed where the terminal
+runs, which is not always where the shell runs:
+
+- `darwin`: Homebrew cask `font-jetbrains-mono-nerd-font` (Task 4).
+- `linux` desktop: the `JetBrainsMono.tar.xz` release archive from
+  `ryanoasis/nerd-fonts`, extracted into `$XDG_DATA_HOME/fonts/JetBrainsMonoNerdFont`
+  by `.chezmoiexternal` (Task 11), then `fc-cache` (Task 4).
+- `wsl`: the terminal is Windows Terminal, so the font goes on Windows. The README
+  gives the Windows install command and the Windows Terminal setting (Task 12).
+- `linux` server: nothing. The font belongs on the machine you connect from.
+
+Selecting the font in the terminal app is a manual step on every platform; the
+README says how.
 
 ## Target layout
 
@@ -138,8 +155,8 @@ home/
   private_dot_ssh/private_config.tmpl
 ```
 
-The skill directories `~/.cursor/skills/` and `~/.agents/skills/` have no files in
-the source tree. Task 11 fills them from `.chezmoiexternal.toml.tmpl`.
+`~/.agents/skills/` and the Linux desktop font directory have no files in the
+source tree. Task 11 fills them from `.chezmoiexternal.toml.tmpl`.
 
 ## Template data
 
@@ -355,7 +372,8 @@ and adding a tool is a one-line edit.
 Replace nvm with `fnm`. Drop the Powerline fonts clone.
 
 **Add:** `git`, `git-delta`, `vim`, `zsh-autosuggestions`, `starship`, `chezmoi`,
-`ripgrep`, `fzf`, `pnpm`.
+`ripgrep`, `fzf`. On `darwin`, the cask `font-jetbrains-mono-nerd-font` (see
+"Nerd Font"). No pnpm.
 
 **Do:**
 
@@ -376,6 +394,11 @@ Replace nvm with `fnm`. Drop the Powerline fonts clone.
    `/usr/bin/zsh` the login shell if it isn't already (`chsh` only accepts shells
    listed in `/etc/shells`, and Homebrew's zsh isn't). Nothing on `darwin`, where
    zsh is the default.
+5. `run_onchange_after_20-refresh-font-cache.sh.tmpl`: rendered only on `linux`
+   when not headless. Runs `fc-cache` on `$XDG_DATA_HOME/fonts` (default
+   `~/.local/share/fonts`) if `fc-cache` exists. Include the external's URL from
+   `home/.chezmoiexternal.toml.tmpl` in a comment so a font version change re-runs
+   it; if that file doesn't exist yet, use the URL in "Nerd Font" and say so.
 
 **Owns:** `home/.chezmoidata/packages.yaml`, `home/.chezmoiscripts/`.
 
@@ -401,7 +424,7 @@ completion, zsh-autosuggestions. Drop oh-my-zsh, nvm, and the SSH agent lines
 
 1. `home/dot_zshenv.tmpl` (the only zsh file in `$HOME`): the XDG variables,
    `ZDOTDIR`, every relocation variable in "XDG locations", `brew shellenv` from
-   `{{ .brewPrefix }}` if present, `~/.local/bin` and `$PNPM_HOME` on `PATH`
+   `{{ .brewPrefix }}` if present, `~/.local/bin` on `PATH`
    (use `typeset -U path`), `EDITOR`, `PAGER`, and the Python variables. Nothing
    interactive and nothing slow: this file runs for every zsh, including scripts.
    Create the state and cache directories the variables point at if they don't
@@ -491,7 +514,8 @@ The module stays hidden unless credentials are in the environment or
 `force_display = true`, so make it show whenever `AWS_PROFILE` or `AWS_VAULT` is
 set. One `style` can't depend on the profile name, so use a `custom` module (with a
 `when` test) for the red production case and hide the plain module in that case. Don't call BSD- or GNU-only commands, so the prompt behaves
-the same on macOS and Linux. Use symbols that render without a Nerd Font.
+the same on macOS and Linux. Use Nerd Font symbols (Starship's "Nerd Font Symbols"
+preset is a good base); see "Nerd Font".
 
 **Owns:** `home/dot_config/starship.toml`.
 
@@ -611,36 +635,34 @@ output; and `PYTHONSTARTUP=<rendered file> PYTHON_HISTORY=$(mktemp -d)/h python3
 
 ---
 
-### T11. Agent skills
+### T11. Externals: agent skills and Linux font
 
 **Depends on:** T3.
 
-**Goal:** upstream agent skills are installed where Cursor and other agents read
-them, without copying skill files into this repo.
+**Goal:** upstream skills and the Linux desktop font are fetched at apply time,
+without copying their files into this repo.
 
 **Port from `main`:** nothing. `model-selection-advisor` and `daisyui` are dropped.
 
-**Do:**
+**Do:** `home/.chezmoiexternal.toml.tmpl` with two entries.
 
-1. Confirm from current documentation which directories Cursor loads personal
-   skills from (`~/.cursor/skills/` and whether it also reads `~/.agents/skills/`)
-   and what `~/.agents/skills/` is used by.
-2. `home/.chezmoiexternal.toml.tmpl`: install `gh-stack` into
-   `~/.cursor/skills/gh-stack` and `~/.agents/skills/gh-stack` as an `archive` of
-   the `v0.1.0` tag tarball
+1. `gh-stack` into `~/.agents/skills/gh-stack` only (not `~/.cursor/skills`), as an
+   `archive` of the `v0.1.0` tag tarball
    (`https://github.com/github/gh-stack/archive/refs/tags/v0.1.0.tar.gz`), using
    `stripComponents` and `include` so only the contents of `skills/gh-stack/` land
-   there and `SKILL.md` sits directly in each target. Check the tarball's top-level
+   there and `SKILL.md` sits directly in the target. Check the tarball's top-level
    directory name first. Don't use `git-repo`: it clones the whole repository and
-   pulls on every apply. If one directory is read by every agent the user runs,
-   install only there and say why.
-3. Do not manage anything else under `~/.cursor` or `~/.agents`; the apps write
-   there.
+   pulls on every apply.
+2. The JetBrainsMono Nerd Font archive from a pinned `ryanoasis/nerd-fonts`
+   release into `.local/share/fonts/JetBrainsMonoNerdFont`, only on `linux` when
+   not headless (see "Nerd Font"). Include only the font files.
+3. Do not manage anything else under `~/.agents`.
 
 **Owns:** `home/.chezmoiexternal.toml.tmpl`.
 
-**Done when:** `TEST_EXTERNALS=1 scripts/test.sh` passes with network access and
-the rendered output contains `SKILL.md` at each target.
+**Done when:** `TEST_EXTERNALS=1 scripts/test.sh` passes with network access; the
+rendered output has `.agents/skills/gh-stack/SKILL.md` in every profile, no
+`.cursor` directory, and font files only in the linux-desktop profile.
 
 ---
 
@@ -652,8 +674,10 @@ the rendered output contains `SKILL.md` at each target.
 `--branch <name>` for trying a branch before merging; daily operations (`edit`,
 `diff`, `apply`, `update`, `re-add`, `chezmoi cd`) linked to the chezmoi docs; how
 to add a package; how to add a file for one platform; the work config and
-`_<company>.zsh` convention; where secrets and local overrides go; and how to run
-`scripts/test.sh`. No long background section.
+`_<company>.zsh` convention; where secrets and local overrides go; setting the
+terminal font on each platform, including installing JetBrainsMono Nerd Font on
+Windows for WSL (see "Nerd Font"); and how to run `scripts/test.sh`. No long
+background section.
 
 **Owns:** `README.md`.
 
@@ -693,10 +717,10 @@ exercised on a real Mac, and assert `brewPrefix = "/opt/homebrew"`.
    personal, non-work, headless Linux machine
    (`--promptBool 'Headless Linux (no 1Password app)=true' --promptBool 'Work machine=false'`).
 3. Check: `zsh -i -c exit` is clean; `brew`, `gh`, `bat`, `eza`, `delta`,
-   `starship`, `fnm`, `pnpm`, and `uv` are on `PATH` in login and non-login
+   `starship`, `fnm`, and `uv` are on `PATH` in login and non-login
    shells; `git config --get user.email` and `core.pager` are correct; and the only
    new dotfiles in the user's home are `~/.zshenv`, `~/.ssh`, `~/.config`,
-   `~/.local`, `~/.cache`, and the skill directories.
+   `~/.local`, `~/.cache`, and `~/.agents`.
 4. Run `chezmoi apply` a second time and check that no script runs again and
    `chezmoi status` is empty.
 5. Add a formula to `packages.yaml` in the test user's source directory, run
@@ -728,8 +752,3 @@ task.
 **Owns:** `README.md` (this section only), `PLAN.md`.
 
 **Done when:** the repo matches "Target layout" minus `PLAN.md`.
-
-## Open questions
-
-1. **Node.** The plan uses fnm for Node versions and pnpm from Homebrew. Say if
-   you'd rather have plain Homebrew `node` (no per-project versions) or mise.
