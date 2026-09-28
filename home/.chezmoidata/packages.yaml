@@ -4,7 +4,6 @@ brews:
   - aws-vault
   - awscli
   - bat
-  - chezmoi
   - eza
   - fnm
   - fzf
@@ -34,6 +33,7 @@ apt:
   - curl
   - file
   - git
+  - less
   - zsh
 
 # Non-headless linux only. fontconfig provides fc-cache for the Nerd Font.
