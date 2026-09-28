@@ -34,7 +34,7 @@ if command -v uv >/dev/null; then
   eval "$(uv generate-shell-completion zsh)"
 fi
 
-if command -v fzf >/dev/null; then
+if [[ -o zle ]] && command -v fzf >/dev/null; then
   source <(fzf --zsh)
 fi
 
