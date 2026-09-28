@@ -2,10 +2,10 @@
 platform = "darwin"
 brewPrefix = "/opt/homebrew"
 headless = false
-work = false
-workEmail = "placeholder"
-windowsUser = "placeholder"
-name = "placeholder"
-email = "placeholder"
-signingKey = "placeholder"
-workSigningKey = "placeholder"
+work = true
+workEmail = "mike.nitchie@example.com"
+windowsUser = ""
+name = "Mike Nitchie"
+email = "mikenitchie@gmail.com"
+signingKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHZItfI9xDfprMpb1fsAgp+6PDaxbds/CNSKgKiZ+5dl"
+workSigningKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKgUUi7EjbMsWX5WTSZ3r3oDhoP0rHIuKYKoox7sZTHt"

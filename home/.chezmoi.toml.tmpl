@@ -1,0 +1,50 @@
+{{- $platform := "" -}}
+{{- $brewPrefix := "" -}}
+{{- if eq .chezmoi.os "darwin" -}}
+{{-   if ne .chezmoi.arch "arm64" -}}
+{{-     fail "Apple Silicon (arm64) is required; this Mac is not supported" -}}
+{{-   end -}}
+{{-   $platform = "darwin" -}}
+{{-   $brewPrefix = "/opt/homebrew" -}}
+{{- else if eq .chezmoi.os "linux" -}}
+{{-   $platform = "linux" -}}
+{{-   $brewPrefix = "/home/linuxbrew/.linuxbrew" -}}
+{{/* .chezmoi.kernel is Linux-only and may be absent on darwin. */}}
+{{-   if hasKey .chezmoi "kernel" -}}
+{{-     if hasKey .chezmoi.kernel "osrelease" -}}
+{{-       if .chezmoi.kernel.osrelease | lower | contains "microsoft" -}}
+{{-         $platform = "wsl" -}}
+{{-       end -}}
+{{-     end -}}
+{{-   end -}}
+{{- else -}}
+{{-   fail (printf "unsupported operating system %q" .chezmoi.os) -}}
+{{- end -}}
+{{- $work := promptBoolOnce . "work" "Work machine" -}}
+{{- $workEmail := "" -}}
+{{- if $work -}}
+{{-   $workEmail = promptStringOnce . "workEmail" "Work email" -}}
+{{- end -}}
+{{- $headless := false -}}
+{{- if eq $platform "linux" -}}
+{{-   $headless = promptBoolOnce . "headless" "Headless Linux (no 1Password app)" -}}
+{{- end -}}
+{{- $windowsUser := "" -}}
+{{- if eq $platform "wsl" -}}
+{{-   $windowsUser = promptStringOnce . "windowsUser" "Windows user folder name" -}}
+{{- end -}}
+{{- $name := "Mike Nitchie" -}}
+{{- $email := "mikenitchie@gmail.com" -}}
+{{- $signingKey := "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHZItfI9xDfprMpb1fsAgp+6PDaxbds/CNSKgKiZ+5dl" -}}
+{{- $workSigningKey := "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKgUUi7EjbMsWX5WTSZ3r3oDhoP0rHIuKYKoox7sZTHt" -}}
+[data]
+platform = {{ $platform | quote }}
+brewPrefix = {{ $brewPrefix | quote }}
+headless = {{ $headless }}
+work = {{ $work }}
+workEmail = {{ $workEmail | quote }}
+windowsUser = {{ $windowsUser | quote }}
+name = {{ $name | quote }}
+email = {{ $email | quote }}
+signingKey = {{ $signingKey | quote }}
+workSigningKey = {{ $workSigningKey | quote }}
