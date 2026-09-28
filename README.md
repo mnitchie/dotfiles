@@ -19,7 +19,74 @@ The installer puts `chezmoi` in `~/.local/bin`; update it later with `chezmoi up
 | Headless Linux (no 1Password app) | Linux only | **y** disables git commit signing and the 1Password SSH agent |
 | Windows user folder name | WSL only | Folder name under `C:\Users\` (spaces allowed) |
 
-On **macOS**, the first Homebrew install may prompt for **sudo** and **Xcode Command Line Tools**. On **Linux and WSL**, **apt** and Homebrew setup may prompt for **sudo**.
+On **macOS**, install the **1Password desktop app** separately (from [1Password](https://1password.com/) or the Mac App Store). Git commit signing and the SSH agent use the app’s `op-ssh-sign`; Homebrew only installs the **1Password CLI** (`op`). The first Homebrew install may also prompt for **sudo** and **Xcode Command Line Tools**. On **Linux and WSL**, **apt** and Homebrew setup may prompt for **sudo**.
+
+## Moving a machine off the old bare repo
+
+The old setup used a bare git repo at `~/.my_dotfiles_git` with `work-tree=$HOME`. Chezmoi replaces that entirely. **Move** old paths aside into a dated backup directory — do not delete them until you are satisfied with the new setup.
+
+1. **See what the old repo tracked** (optional, for your records):
+
+   ```bash
+   git --git-dir=$HOME/.my_dotfiles_git --work-tree=$HOME ls-files
+   ```
+
+2. **Move the old dotfiles aside** into a backup directory:
+
+   ```bash
+   backup=~/dotfiles-backup-$(date +%Y%m%d)
+   mkdir -p "$backup"
+   [ -e "$HOME/.my_dotfiles_git" ] && mv -n "$HOME/.my_dotfiles_git" "$backup/"
+   [ -e "$HOME/.oh-my-zsh" ] && mv -n "$HOME/.oh-my-zsh" "$backup/"
+   [ -e "$HOME/.zshenv" ] && mv -n "$HOME/.zshenv" "$backup/"
+   [ -e "$HOME/.config/zsh" ] && mv -n "$HOME/.config/zsh" "$backup/"
+   [ -e "$HOME/.config/includes" ] && mv -n "$HOME/.config/includes" "$backup/"
+   [ -e "$HOME/.vimrc" ] && mv -n "$HOME/.vimrc" "$backup/"
+   [ -d "$HOME/.vim" ] && mv -n "$HOME/.vim" "$backup/"
+   [ -e "$HOME/.config/git/config" ] && mv -n "$HOME/.config/git/config" "$backup/"
+   [ -e "$HOME/.config/gh/config.yml" ] && mv -n "$HOME/.config/gh/config.yml" "$backup/"
+   ```
+
+   If you had secrets in `~/.config/includes/secrets.sh`, copy that file somewhere private before or after the move. Chezmoi does **not** recreate it — use 1Password or `~/.config/zsh/local.zsh` for secrets going forward.
+
+   Leave `~/.config/gh/hosts.yml` in place (GitHub login state). On **WSL**, you no longer need any old `socat` / `npiperelay` SSH-agent relay from the previous Linux includes.
+
+3. **Carry over zsh history** to the new `HISTFILE` (`~/.local/state/zsh/history`). The old setup did not set `HISTFILE`; oh-my-zsh/zsh wrote `~/.zsh_history` and sometimes `$ZDOTDIR/.zsh_history` (`~/.config/zsh/.zsh_history`). Step 2 moved `~/.config/zsh` into `$backup`, so look at `~/.zsh_history` and `$backup/zsh/.zsh_history` (reuse the same `backup=...` as step 2 if you are in a new shell):
+
+   ```bash
+   backup=~/dotfiles-backup-$(date +%Y%m%d)
+   mkdir -p "$HOME/.local/state/zsh"
+   hist="$HOME/.local/state/zsh/history"
+   if [ ! -e "$hist" ]; then
+     for old in "$HOME/.zsh_history" "$backup/zsh/.zsh_history"; do
+       if [ -f "$old" ]; then
+         cp -a "$old" "$hist"
+         break
+       fi
+     done
+   fi
+   ```
+
+   If `$hist` already exists, merge manually or append from the old file instead of overwriting.
+
+4. **Keep existing SSH host entries.** Chezmoi replaces `~/.ssh/config` but `Include`s `~/.ssh/config.local` first. Leave `~/.ssh` keys, `known_hosts`, and `authorized_keys` in place; only rename the config file if you do not already have a local override:
+
+   ```bash
+   [ -f "$HOME/.ssh/config" ] && [ ! -e "$HOME/.ssh/config.local" ] && mv "$HOME/.ssh/config" "$HOME/.ssh/config.local"
+   ```
+
+5. **Install chezmoi and apply** (same as [New machine](#new-machine)):
+
+   ```bash
+   sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin" init --apply mnitchie
+   ```
+
+6. Open a **new terminal** and check:
+
+   ```bash
+   chezmoi doctor
+   chezmoi status
+   ```
 
 ## Daily use
 
