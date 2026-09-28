@@ -1,0 +1,46 @@
+# macOS does not set the XDG base directories.
+export XDG_CONFIG_HOME="${HOME}/.config"
+export XDG_DATA_HOME="${HOME}/.local/share"
+export XDG_STATE_HOME="${HOME}/.local/state"
+export XDG_CACHE_HOME="${HOME}/.cache"
+
+export ZDOTDIR="${XDG_CONFIG_HOME}/zsh"
+
+# /etc/zshrc sources /etc/zshrc_Apple_Terminal, which otherwise mkdir's
+# ${ZDOTDIR}/.zsh_sessions. It has to be set before that file runs.
+export SHELL_SESSIONS_DISABLE=1
+
+# Ubuntu's /etc/zsh/zshrc runs compinit into ${ZDOTDIR}/.zcompdump unless this
+# is set. Exported so a nested shell still has it when /etc/zshrc runs.
+export skip_global_compinit=1
+
+export HISTFILE="${XDG_STATE_HOME}/zsh/history"
+export PYTHONSTARTUP="${XDG_CONFIG_HOME}/python/pythonstartup.py"
+export PYTHON_HISTORY="${XDG_STATE_HOME}/python/history"
+export IPYTHONDIR="${XDG_CONFIG_HOME}/ipython"
+export LESSHISTFILE="${XDG_STATE_HOME}/less/history"
+export NPM_CONFIG_USERCONFIG="${XDG_CONFIG_HOME}/npm/npmrc"
+export NPM_CONFIG_CACHE="${XDG_CACHE_HOME}/npm"
+
+# fnm's default is $XDG_DATA_HOME/fnm when that variable is set, so FNM_DIR is
+# left unset. An existing ~/.fnm, or ~/Library/Application Support/fnm on macOS,
+# still wins inside fnm.
+
+export EDITOR=vim
+export PAGER=less
+export PYTHONDONTWRITEBYTECODE=1
+export PYTHONUNBUFFERED=1
+
+mkdir -p -- \
+  "${XDG_STATE_HOME}/zsh" \
+  "${XDG_STATE_HOME}/python" \
+  "${XDG_STATE_HOME}/less" \
+  "${XDG_CACHE_HOME}/zsh" \
+  "${XDG_CACHE_HOME}/npm"
+
+if [[ -x "{{ .brewPrefix }}/bin/brew" ]]; then
+  eval "$({{ .brewPrefix }}/bin/brew shellenv zsh)"
+fi
+
+typeset -U path
+path=("${HOME}/.local/bin" $path)

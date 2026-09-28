@@ -1,0 +1,9 @@
+{{ if eq .platform "darwin" -}}
+# /etc/zprofile runs path_helper, which rebuilds PATH from /etc/paths and
+# /etc/paths.d and leaves Homebrew behind the system directories.
+if [[ -x "{{ .brewPrefix }}/bin/brew" ]]; then
+  eval "$({{ .brewPrefix }}/bin/brew shellenv zsh)"
+fi
+typeset -U path
+path=("${HOME}/.local/bin" $path)
+{{ end -}}
