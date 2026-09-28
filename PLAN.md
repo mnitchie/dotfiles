@@ -17,7 +17,7 @@ One command on a new macOS, Linux, or WSL machine installs the same tools and
 produces the same shell, git, and editor behavior:
 
 ```bash
-sh -c "$(curl -fsLS https://get.chezmoi.io)" -- init --apply mnitchie
+sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin" init --apply mnitchie
 ```
 
 Day to day: `chezmoi edit <file>`, `chezmoi diff`, `chezmoi apply`, and
@@ -373,8 +373,8 @@ and adding a tool is a one-line edit.
 `aws-vault`, 1Password CLI. Replace `exa` with `eza`. Replace pyenv with `uv`.
 Replace nvm with `fnm`. Drop the Powerline fonts clone.
 
-**Add:** `git`, `git-delta`, `vim`, `zsh-autosuggestions`, `starship`, `chezmoi`,
-`ripgrep`, `fzf`. On `darwin`, the cask `font-jetbrains-mono-nerd-font` (see
+**Add:** `git`, `git-delta`, `vim`, `zsh-autosuggestions`, `starship`, `less`
+(in apt), `ripgrep`, `fzf`. On `darwin`, the cask `font-jetbrains-mono-nerd-font` (see
 "Nerd Font"). No pnpm.
 
 **Do:**

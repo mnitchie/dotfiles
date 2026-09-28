@@ -5,10 +5,10 @@ Personal machine setup managed with [chezmoi](https://www.chezmoi.io/). A single
 ## New machine
 
 ```bash
-sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply mnitchie
+sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin" init --apply mnitchie
 ```
 
-`mnitchie` resolves to [github.com/mnitchie/dotfiles](https://github.com/mnitchie/dotfiles). To try a branch before it is merged, add `--branch <name>`.
+The installer puts `chezmoi` in `~/.local/bin`; update it later with `chezmoi upgrade`. `mnitchie` resolves to [github.com/mnitchie/dotfiles](https://github.com/mnitchie/dotfiles). To try a branch before it is merged, add `--branch <name>` (keep `-b "$HOME/.local/bin"` before `init`).
 
 `chezmoi init` runs `home/.chezmoi.toml.tmpl` and asks once (via `prompt*Once`). Bool prompts have no default — answer **y** or **n**:
 
