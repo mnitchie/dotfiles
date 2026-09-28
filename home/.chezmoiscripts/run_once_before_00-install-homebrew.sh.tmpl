@@ -20,5 +20,11 @@ if [[ ! -x "{{ .brewPrefix }}/bin/brew" ]]; then
   installer="$(/usr/bin/mktemp)"
   trap '/bin/rm -f "$installer"' EXIT
   /usr/bin/curl -fsSL -o "${installer}" https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh
-  NONINTERACTIVE=1 /bin/bash "${installer}"
+  # With NONINTERACTIVE set, install.sh uses `sudo -n` and aborts with
+  # "Insufficient permissions" instead of prompting. Skip it when sudo needs a password.
+  if /usr/bin/sudo -n true 2>/dev/null; then
+    NONINTERACTIVE=1 /bin/bash "${installer}"
+  else
+    /bin/bash "${installer}"
+  fi
 fi
