@@ -1,0 +1,15 @@
+let state = empty($XDG_STATE_HOME) ? expand('~/.local/state') : $XDG_STATE_HOME
+let vim_state = state . '/vim'
+call mkdir(vim_state, 'p')
+call mkdir(vim_state . '/swap', 'p')
+call mkdir(vim_state . '/undo', 'p')
+call mkdir(vim_state . '/backup', 'p')
+let &viminfofile = vim_state . '/viminfo'
+let &directory = vim_state . '/swap//'
+let &undodir = vim_state . '/undo//'
+let &backupdir = vim_state . '/backup//'
+
+set number
+syntax on
+set listchars=eol:¬,tab:>·,trail:~,extends:>,precedes:<,space:␣
+set list
