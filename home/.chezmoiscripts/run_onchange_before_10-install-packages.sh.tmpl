@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+brew="{{ .brewPrefix }}/bin/brew"
+if [[ ! -x "${brew}" ]]; then
+  printf 'Homebrew is not installed at %s\n' "${brew}" >&2
+  exit 1
+fi
+# Assignment, not eval "$(...)", so a shellenv failure is not swallowed.
+shellenv="$("${brew}" shellenv)"
+eval "${shellenv}"
+"${brew}" bundle --file=- --no-upgrade <<'EOF'
+{{ range .brews -}}
+brew {{ . | quote }}
+{{ end -}}
+{{ if eq .platform "darwin" -}}
+{{ range .casks -}}
+cask {{ . | quote }}
+{{ end -}}
+{{ end -}}
+EOF
+{{ if or (eq .platform "linux") (eq .platform "wsl") -}}
+# No 1password-cli formula. The cask can install a Linux binary, but it only
+# links op; 1Password's apt package also creates the onepassword-cli group
+# and setgid bit the desktop app integration needs.
+# https://developer.1password.com/docs/cli/get-started/
+sudo DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get update
+sudo DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get install -y gnupg
+sudo /usr/bin/mkdir -p \
+  /usr/share/keyrings \
+  /etc/debsig/policies/AC2D62742012EA22 \
+  /usr/share/debsig/keyrings/AC2D62742012EA22
+/usr/bin/curl -fsSL https://downloads.1password.com/linux/keys/1password.asc \
+  | sudo /usr/bin/gpg --batch --yes --dearmor --output /usr/share/keyrings/1password-archive-keyring.gpg
+op_arch="$(/usr/bin/dpkg --print-architecture)"
+printf 'deb [arch=%s signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/%s stable main\n' \
+  "${op_arch}" "${op_arch}" \
+  | sudo /usr/bin/tee /etc/apt/sources.list.d/1password.list >/dev/null
+/usr/bin/curl -fsSL https://downloads.1password.com/linux/debian/debsig/1password.pol \
+  | sudo /usr/bin/tee /etc/debsig/policies/AC2D62742012EA22/1password.pol >/dev/null
+/usr/bin/curl -fsSL https://downloads.1password.com/linux/keys/1password.asc \
+  | sudo /usr/bin/gpg --batch --yes --dearmor --output /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
+sudo DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get update
+sudo DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get install -y 1password-cli
+{{ end -}}

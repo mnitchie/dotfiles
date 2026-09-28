@@ -1,0 +1,17 @@
+{{- if and (eq .platform "linux") (not .headless) -}}
+{{- $external := include ".chezmoiexternal.toml.tmpl" -}}
+{{- $fontURL := regexFind `https://github.com/ryanoasis/nerd-fonts/releases/download/[^"\s]+` $external -}}
+{{- if not $fontURL -}}
+{{-   fail "JetBrainsMono Nerd Font URL missing from .chezmoiexternal.toml.tmpl" -}}
+{{- end -}}
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Re-run fc-cache when the pinned font archive changes: {{ $fontURL }}
+fonts_dir="${XDG_DATA_HOME:-${HOME}/.local/share}/fonts"
+if fc_cache="$(command -v fc-cache)"; then
+  "${fc_cache}" -- "${fonts_dir}"
+fi
+{{- /* newline: a break after end would also be emitted when this renders empty */ -}}
+{{- println -}}
+{{- end -}}
