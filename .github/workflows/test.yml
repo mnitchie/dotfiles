@@ -1,0 +1,62 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - run: scripts/install-test-tools.sh
+      - run: scripts/test.sh
+        env:
+          TEST_EXTERNALS: "1"
+      - name: darwin config template
+        if: runner.os == 'macOS'
+        run: |
+          set -euo pipefail
+          # macOS mktemp requires a template; TMPDIR is not /tmp on the runner.
+          tmp="$(mktemp -d "${TMPDIR:-/tmp}/chezmoi-ci.XXXXXX")"
+          trap 'rm -rf -- "$tmp"' EXIT
+          mkdir -p \
+            "$tmp/home" \
+            "$tmp/cache" \
+            "$tmp/xdg/cache" \
+            "$tmp/xdg/config" \
+            "$tmp/xdg/data" \
+            "$tmp/xdg/state" \
+            "$tmp/dest"
+          out="$tmp/init.toml"
+          env \
+            HOME="$tmp/home" \
+            XDG_CACHE_HOME="$tmp/xdg/cache" \
+            XDG_CONFIG_HOME="$tmp/xdg/config" \
+            XDG_DATA_HOME="$tmp/xdg/data" \
+            XDG_STATE_HOME="$tmp/xdg/state" \
+            ./.bin/chezmoi \
+              --cache "$tmp/cache" \
+              --source "$PWD" \
+              --destination "$tmp/dest" \
+              --persistent-state "$tmp/state" \
+              execute-template --init --no-tty \
+              --promptBool 'Headless Linux (no 1Password app)=true' \
+              --promptBool 'Work machine=false' \
+              --promptString 'Work email=' \
+              --promptString 'Windows user folder name=' \
+              < home/.chezmoi.toml.tmpl >"$out"
+          cat "$out"
+          grep -F -x 'platform = "darwin"' "$out"
+          grep -F -x 'brewPrefix = "/opt/homebrew"' "$out"
