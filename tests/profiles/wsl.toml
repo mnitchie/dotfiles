@@ -1,0 +1,11 @@
+[data]
+platform = "wsl"
+brewPrefix = "/home/linuxbrew/.linuxbrew"
+headless = false
+work = false
+workEmail = "placeholder"
+windowsUser = "placeholder"
+name = "placeholder"
+email = "placeholder"
+signingKey = "placeholder"
+workSigningKey = "placeholder"
