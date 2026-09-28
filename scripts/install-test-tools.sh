@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Harness and CI only. Machines are set up with the chezmoi one-liner in PLAN.md.
+# Harness and CI only. Machines are set up with the chezmoi one-liner in README.md.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

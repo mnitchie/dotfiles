@@ -1,0 +1,5 @@
+# One chezmoi flag per line. Prompt text must match home/.chezmoi.toml.tmpl.
+--promptBool=Headless Linux (no 1Password app)=true
+--promptBool=Work machine=false
+--promptString=Work email=
+--promptString=Windows user folder name=

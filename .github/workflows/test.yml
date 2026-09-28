@@ -40,6 +40,17 @@ jobs:
             "$tmp/xdg/state" \
             "$tmp/dest"
           out="$tmp/init.toml"
+          prompt_args=()
+          while IFS= read -r line || [[ -n "$line" ]]; do
+            case "$line" in
+              '' | '#'*) continue ;;
+            esac
+            prompt_args+=("$line")
+          done < tests/init-answers
+          if [[ ${#prompt_args[@]} -eq 0 ]]; then
+            echo "tests/init-answers has no flags" >&2
+            exit 1
+          fi
           env \
             HOME="$tmp/home" \
             XDG_CACHE_HOME="$tmp/xdg/cache" \
@@ -52,10 +63,7 @@ jobs:
               --destination "$tmp/dest" \
               --persistent-state "$tmp/state" \
               execute-template --init --no-tty \
-              --promptBool 'Headless Linux (no 1Password app)=true' \
-              --promptBool 'Work machine=false' \
-              --promptString 'Work email=' \
-              --promptString 'Windows user folder name=' \
+              "${prompt_args[@]}" \
               < home/.chezmoi.toml.tmpl >"$out"
           cat "$out"
           grep -F -x 'platform = "darwin"' "$out"

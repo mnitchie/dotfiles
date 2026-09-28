@@ -83,77 +83,95 @@ run_chezmoi() {
   cat "$stdout_file"
 }
 
-plan_data_keys() {
-  awk '
-    /^## Template data$/ { section = 1; next }
-    section && /^## / { exit }
-    section && index($0, "|") {
-      n = split($0, cols, "|")
-      if (n < 6) next
-      raw = cols[2]
-      if (index(raw, "`") == 0) next
-      key = raw
-      gsub(/[[:space:]]/, "", key)
-      gsub(/`/, "", key)
-      if (key ~ /^[A-Za-z_][A-Za-z0-9_]*$/) print key
-    }
-  ' "$repo_root/PLAN.md" | LC_ALL=C sort -u
+# Third argument of promptBoolOnce / promptStringOnce, one prompt per line.
+template_prompt_texts() {
+  local matches rc
+  rc=0
+  matches="$(grep -E -o 'prompt(Bool|String)Once[^"]*"[^"]*"[^"]*"[^"]*"' "$1")" || rc=$?
+  if [[ "$rc" -eq 1 ]]; then
+    return 0
+  fi
+  if [[ "$rc" -ne 0 ]]; then
+    echo "failed to read prompts from ${1}" >&2
+    return 1
+  fi
+  printf '%s\n' "$matches" | sed 's/.*"\([^"]*\)"$/\1/'
 }
 
-# Prompt strings come from the Template data table. Answers are fixed here.
-plan_prompts() {
-  awk '
-    /^## Template data$/ { section = 1; next }
-    section && /^## / { exit }
-    section && index($0, "|") {
-      n = split($0, cols, "|")
-      if (n < 6) next
-      prompt = cols[5]
-      gsub(/^[[:space:]]+/, "", prompt)
-      gsub(/[[:space:]]+$/, "", prompt)
-      if (substr(prompt, 1, 1) != "`") next
-      len = length(prompt)
-      if (substr(prompt, len, 1) != "`") next
-      prompt = substr(prompt, 2, len - 2)
-      type = cols[3]
-      gsub(/[[:space:]]/, "", type)
-      key = cols[2]
-      gsub(/[[:space:]]/, "", key)
-      gsub(/`/, "", key)
-      printf "%s\t%s\t%s\n", type, key, prompt
-    }
-  ' "$repo_root/PLAN.md"
+# tests/init-answers lines are single argv elements, e.g.
+# --promptBool=Headless Linux (no 1Password app)=true
+answer_prompt_text() {
+  local line="$1" rest
+  case "$line" in
+    --promptBool=* | --promptString=*)
+      rest="${line#*=}"
+      ;;
+    --promptBool\ * | --promptString\ *)
+      rest="${line#* }"
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+  if [[ "$rest" != *=* ]]; then
+    return 1
+  fi
+  printf '%s\n' "${rest%=*}"
 }
 
 prompt_args=()
 load_prompt_args() {
-  local type key prompt answer
+  local answers="$repo_root/tests/init-answers"
+  local line prompt
   prompt_args=()
-  while IFS=$'\t' read -r type key prompt; do
-    [[ -n "$key" ]] || continue
-    case "$key" in
-      headless) answer=true ;;
-      work) answer=false ;;
-      workEmail) answer="" ;;
-      windowsUser) answer="" ;;
-      *)
-        echo "no hard-coded prompt answer for ${key}" >&2
-        return 1
-        ;;
-    esac
-    case "$type" in
-      bool) prompt_args+=(--promptBool "${prompt}=${answer}") ;;
-      string) prompt_args+=(--promptString "${prompt}=${answer}") ;;
-      *)
-        echo "unsupported prompt type ${type} for ${key}" >&2
-        return 1
-        ;;
-    esac
-  done < <(plan_prompts)
-  if [[ ${#prompt_args[@]} -ne 8 ]]; then
-    echo "expected 4 prompts in the Template data table" >&2
+  if [[ ! -f "$answers" ]]; then
+    echo "missing ${answers}" >&2
     return 1
   fi
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    case "$line" in
+      '' | '#'*) continue ;;
+    esac
+    if ! prompt="$(answer_prompt_text "$line")"; then
+      echo "bad prompt answer line: ${line}" >&2
+      return 1
+    fi
+    if [[ -z "$prompt" ]]; then
+      echo "prompt answer has an empty prompt: ${line}" >&2
+      return 1
+    fi
+    prompt_args+=("$line")
+  done <"$answers"
+  if [[ ${#prompt_args[@]} -eq 0 ]]; then
+    echo "no prompt answers in ${answers}" >&2
+    return 1
+  fi
+}
+
+# chezmoi returns false for an unknown promptBool, so a new prompt must fail here.
+template_prompts_covered() {
+  local template="$1"
+  local answers="$repo_root/tests/init-answers"
+  local prompt line covered missing
+  missing=0
+  while IFS= read -r prompt; do
+    [[ -n "$prompt" ]] || continue
+    covered=0
+    while IFS= read -r line || [[ -n "$line" ]]; do
+      case "$line" in
+        '' | '#'*) continue ;;
+      esac
+      if [[ "$(answer_prompt_text "$line")" == "$prompt" ]]; then
+        covered=1
+        break
+      fi
+    done <"$answers"
+    if [[ "$covered" -eq 0 ]]; then
+      echo "init template prompt has no answer: ${prompt}" >&2
+      missing=1
+    fi
+  done < <(template_prompt_texts "$template")
+  return "$missing"
 }
 
 data_keys() {
@@ -260,7 +278,7 @@ test_profile() {
     return 1
   fi
 
-  if [[ -e "$out/PLAN.md" || -e "$out/README.md" || -e "$out/scripts/test.sh" ]]; then
+  if [[ -e "$out/README.md" || -e "$out/scripts/test.sh" ]]; then
     echo "${name}: rendered repo files; .chezmoiroot was not applied" >&2
     return 1
   fi
@@ -332,12 +350,9 @@ test_profile() {
   return "$failed_checks"
 }
 
-plan_keys="$(plan_data_keys)"
-if [[ -z "$plan_keys" ]]; then
-  echo "failed to parse Template data keys from PLAN.md" >&2
+if ! load_prompt_args; then
   exit 1
 fi
-load_prompt_args
 
 repo_before="$tmp/repo-before"
 home_before="$tmp/home-before"
@@ -346,6 +361,16 @@ snapshot_home_chezmoi >"$home_before"
 
 failed=0
 profile_names=(darwin linux-server linux-desktop wsl)
+expected_keys=""
+ref_profile=""
+for name in "${profile_names[@]}"; do
+  profile="${repo_root}/tests/profiles/${name}.toml"
+  if [[ -f "$profile" ]]; then
+    expected_keys="$(data_keys "$profile")"
+    ref_profile="$name"
+    break
+  fi
+done
 for name in "${profile_names[@]}"; do
   profile="${repo_root}/tests/profiles/${name}.toml"
   profile_ok=0
@@ -360,9 +385,9 @@ for name in "${profile_names[@]}"; do
       profile_ok=1
     fi
     got="$(data_keys "$profile")"
-    if [[ "$got" != "$plan_keys" ]]; then
-      echo "${name}: [data] keys do not match the Template data table" >&2
-      diff -u <(printf '%s\n' "$plan_keys") <(printf '%s\n' "$got") >&2 || true
+    if [[ "$name" != "$ref_profile" && "$got" != "$expected_keys" ]]; then
+      echo "${name}: [data] keys differ from ${ref_profile}" >&2
+      diff -u <(printf '%s\n' "$expected_keys") <(printf '%s\n' "$got") >&2 || true
       profile_ok=1
     fi
     if ! test_profile "$name"; then
@@ -383,7 +408,10 @@ if [[ ! -f "$template" ]]; then
 else
   init_out="$tmp/init.toml"
   mkdir -p "$tmp/init-dest"
-  if ! run_chezmoi \
+  if ! template_prompts_covered "$template"; then
+    echo "init-template fail"
+    failed=1
+  elif ! run_chezmoi \
     --source "$repo_root" \
     --destination "$tmp/init-dest" \
     --persistent-state "$tmp/init.state" \
