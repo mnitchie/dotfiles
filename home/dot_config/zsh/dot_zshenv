@@ -1,8 +1,0 @@
-# Nested zsh inherits ZDOTDIR, so it reads this file instead of ~/.zshenv.
-# The flag is not exported; a child process must run the setup again.
-if [[ -z ${_ZDOTDIR_ZSHENV:-} ]]; then
-  _ZDOTDIR_ZSHENV=1
-  if [[ -r ${HOME}/.zshenv ]] && [[ ! ${HOME}/.zshenv -ef ${(%):-%x} ]]; then
-    source "${HOME}/.zshenv"
-  fi
-fi

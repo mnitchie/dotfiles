@@ -31,15 +31,37 @@ export PAGER=less
 export PYTHONDONTWRITEBYTECODE=1
 export PYTHONUNBUFFERED=1
 
-mkdir -p -- \
+for _dir in \
   "${XDG_STATE_HOME}/zsh" \
   "${XDG_STATE_HOME}/python" \
   "${XDG_STATE_HOME}/less" \
   "${XDG_CACHE_HOME}/zsh" \
   "${XDG_CACHE_HOME}/npm"
+do
+  [[ -d $_dir ]] || mkdir -p -- "$_dir"
+done
+unset _dir
 
-if [[ -x "{{ .brewPrefix }}/bin/brew" ]]; then
-  eval "$({{ .brewPrefix }}/bin/brew shellenv zsh)"
+if [[ -d "{{ .brewPrefix }}" ]]; then
+  export HOMEBREW_PREFIX="{{ .brewPrefix }}"
+  export HOMEBREW_CELLAR="{{ .brewPrefix }}/Cellar"
+{{- if eq .platform "darwin" }}
+  export HOMEBREW_REPOSITORY="{{ .brewPrefix }}"
+{{- else }}
+  export HOMEBREW_REPOSITORY="{{ .brewPrefix }}/Homebrew"
+{{- end }}
+  typeset -U fpath
+  fpath[1,0]="${HOMEBREW_PREFIX}/share/zsh/site-functions"
+  export FPATH
+  typeset -U path
+  path=("${HOMEBREW_PREFIX}/bin" "${HOMEBREW_PREFIX}/sbin" $path)
+  # Same normalization as brew shellenv: drop extra colons, then a leading
+  # colon so man keeps its default path (including PATH-derived pages).
+  [[ -z ${MANPATH-} ]] || {
+    export MANPATH="${MANPATH%"${MANPATH##*[!:]}"}"
+    export MANPATH=":${MANPATH#"${MANPATH%%[!:]*}"}"
+  }
+  export INFOPATH="${HOMEBREW_PREFIX}/share/info:${INFOPATH:-}"
 fi
 
 typeset -U path
