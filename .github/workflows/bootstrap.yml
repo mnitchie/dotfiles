@@ -67,6 +67,7 @@ jobs:
           zsh -l -i -c 'exit' 2>"$stderr"
           if [[ -s "$stderr" ]]; then
             cat "$stderr" >&2
+            zsh -l -c 'autoload -Uz compaudit; compaudit' || true
             exit 1
           fi
           zsh -l -i -c 'command -v starship fnm uv delta fzf'
