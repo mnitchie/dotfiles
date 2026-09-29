@@ -27,7 +27,6 @@
 {{-   $workEmail = promptStringOnce . "workEmail" "Work email" -}}
 {{-   $opWorkAccount = promptStringOnce . "opWorkAccount" "Work 1Password account sign-in address (blank to skip work secrets)" -}}
 {{- end -}}
-{{- $opPersonalAccount := promptStringOnce . "opPersonalAccount" "Personal 1Password account sign-in address (blank to skip personal secrets)" -}}
 {{- $headless := false -}}
 {{- if eq $platform "linux" -}}
 {{-   $headless = promptBoolOnce . "headless" "Headless Linux (no 1Password app)" -}}
@@ -47,7 +46,6 @@ headless = {{ $headless }}
 work = {{ $work }}
 workEmail = {{ $workEmail | quote }}
 opWorkAccount = {{ $opWorkAccount | quote }}
-opPersonalAccount = {{ $opPersonalAccount | quote }}
 windowsUser = {{ $windowsUser | quote }}
 name = {{ $name | quote }}
 email = {{ $email | quote }}
