@@ -54,7 +54,11 @@ workSigningKey = {{ $workSigningKey | quote }}
 {{- if eq $platform "darwin" }}
 
 [onepassword]
+{{- if and (not (stat "/opt/homebrew/bin/op")) (stat "/usr/local/bin/op") }}
+command = "/usr/local/bin/op"
+{{- else }}
 command = "/opt/homebrew/bin/op"
+{{- end }}
 {{- else if eq $platform "wsl" }}
 
 [onepassword]
