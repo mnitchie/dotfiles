@@ -16,6 +16,7 @@ The installer puts `chezmoi` in `~/.local/bin`; update it later with `chezmoi up
 | --- | --- | --- |
 | Work machine | always | |
 | Work email | if work | |
+| Work 1Password account sign-in address (blank to skip work secrets) | if work | Example: `employee.1password.com`. Leave blank to skip Gemfury secrets |
 | Headless Linux (no 1Password app) | Linux only | **y** disables git commit signing and the 1Password SSH agent |
 | Windows user folder name | WSL only | Folder name under `C:\Users\` (spaces allowed) |
 
@@ -131,6 +132,7 @@ Template **data keys** (from `home/.chezmoi.toml.tmpl`; other templates use thes
 | `headless` | Linux without 1Password desktop app |
 | `work` | Work machine |
 | `workEmail` | Git email for work repos |
+| `opWorkAccount` | Work 1Password account sign-in address (if work; blank skips work secrets) |
 | `windowsUser` | `C:\Users\<name>` folder name (WSL) |
 | `name`, `email` | Personal git identity |
 | `signingKey`, `workSigningKey` | SSH signing public keys |
@@ -142,6 +144,7 @@ Use `home/.chezmoiignore` only for whole directories.
 When **Work machine** is true, apply produces:
 
 - `~/.config/zsh/conf.d/work.zsh` (from `home/dot_config/zsh/conf.d/work.zsh.tmpl`)
+- `~/.config/zsh/conf.d/work-secrets.zsh` (from `private_work-secrets.zsh.tmpl`, when `opWorkAccount` is set)
 - `~/.config/git/work`
 - `[includeIf "gitdir:~/git/strata/"]` → `work` in git config
 
@@ -150,6 +153,10 @@ When a job ends, in the **source**: clear or trim `work.zsh.tmpl` and add `home/
 ## Secrets and local overrides
 
 Nothing secret is committed. Templates may use `onepasswordRead` for 1Password values.
+
+### Work secrets (Gemfury)
+
+On work machines with `opWorkAccount` set, `chezmoi apply` reads one 1Password item: vault **Employee**, title **Gemfury** (API Credential). Field `credential` is the Gemfury token; custom text field `org` is the org slug. That renders `~/.config/zsh/conf.d/work-secrets.zsh` (mode 0600), which exports `FURY_AUTH`, `UV_INDEX_GEMFURY_USERNAME`, `UV_INDEX_GEMFURY_PASSWORD` (`NOPASS`), and `PIP_EXTRA_INDEX_URL` for Gemfury PyPI. Chezmoi runs `op` during apply. With the 1Password desktop app and CLI integration enabled, approve the app prompt (Touch ID on macOS, system authentication on Linux). On headless Linux (no app), run `op account add` once; chezmoi then runs `op signin`, which asks for the account password in the terminal.
 
 Not managed by chezmoi — create on the machine:
 

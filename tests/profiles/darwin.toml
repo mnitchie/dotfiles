@@ -4,6 +4,7 @@ brewPrefix = "/opt/homebrew"
 headless = false
 work = true
 workEmail = "mike.nitchie@example.com"
+opWorkAccount = ""
 windowsUser = ""
 name = "Mike Nitchie"
 email = "mikenitchie@gmail.com"

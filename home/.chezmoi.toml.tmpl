@@ -22,8 +22,10 @@
 {{- end -}}
 {{- $work := promptBoolOnce . "work" "Work machine" -}}
 {{- $workEmail := "" -}}
+{{- $opWorkAccount := "" -}}
 {{- if $work -}}
 {{-   $workEmail = promptStringOnce . "workEmail" "Work email" -}}
+{{-   $opWorkAccount = promptStringOnce . "opWorkAccount" "Work 1Password account sign-in address (blank to skip work secrets)" -}}
 {{- end -}}
 {{- $headless := false -}}
 {{- if eq $platform "linux" -}}
@@ -43,6 +45,7 @@ brewPrefix = {{ $brewPrefix | quote }}
 headless = {{ $headless }}
 work = {{ $work }}
 workEmail = {{ $workEmail | quote }}
+opWorkAccount = {{ $opWorkAccount | quote }}
 windowsUser = {{ $windowsUser | quote }}
 name = {{ $name | quote }}
 email = {{ $email | quote }}

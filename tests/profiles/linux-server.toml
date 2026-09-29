@@ -4,6 +4,7 @@ brewPrefix = "/home/linuxbrew/.linuxbrew"
 headless = true
 work = false
 workEmail = ""
+opWorkAccount = ""
 windowsUser = ""
 name = "Mike Nitchie"
 email = "mikenitchie@gmail.com"

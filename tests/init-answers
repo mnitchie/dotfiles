@@ -2,4 +2,5 @@
 --promptBool=Headless Linux (no 1Password app)=true
 --promptBool=Work machine=false
 --promptString=Work email=
+--promptString=Work 1Password account sign-in address (blank to skip work secrets)=
 --promptString=Windows user folder name=

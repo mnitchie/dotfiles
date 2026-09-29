@@ -48,6 +48,18 @@ mkdir -p \
   "$tmp/xdg/data" \
   "$tmp/xdg/state"
 
+# The work-secrets test points chezmoi at an absolute stub via onepassword.command.
+# Anything else that looks up `op` on PATH must fail instead of calling a real CLI.
+op_guard_dir="$tmp/op-guard"
+mkdir -p "$op_guard_dir"
+cat >"$op_guard_dir/op" <<'EOF'
+#!/usr/bin/env bash
+printf 'refusing to invoke op from PATH: %s\n' "$*" >&2
+exit 99
+EOF
+chmod +x "$op_guard_dir/op"
+export PATH="${op_guard_dir}:${PATH}"
+
 # chezmoi: warning: config file template has changed, run chezmoi init to regenerate config file
 # Printed when --config points at a profile while home/.chezmoi.toml.tmpl exists.
 config_template_warning="config file template has changed"
@@ -218,6 +230,16 @@ is_blank() {
   [[ -z "$stripped" ]]
 }
 
+# GNU stat -c %a; macOS stat -f %OLp. Prints the mode without a leading zero.
+file_mode() {
+  local mode
+  if mode="$(stat -c %a "$1" 2>/dev/null)"; then
+    printf '%s\n' "$mode"
+    return 0
+  fi
+  stat -f %OLp "$1"
+}
+
 snapshot_repo() {
   find "$repo_root" \
     \( -path "$repo_root/.git" -o -path "$repo_root/.bin" \) -prune \
@@ -350,6 +372,206 @@ test_profile() {
   return "$failed_checks"
 }
 
+test_work_secrets() {
+  local failed_checks=0
+  local name out secrets_stub secrets_out secrets_state
+  local op_stub_dir op_stub secrets_tpl rendered
+  local empty_out expected_log mode zsh_out
+
+  for name in "${profile_names[@]}"; do
+    out="$tmp/${name}"
+    if [[ -f "$out/.config/zsh/conf.d/work-secrets.zsh" ]]; then
+      echo "work-secrets: ${name} profile rendered work-secrets.zsh unexpectedly" >&2
+      failed_checks=1
+    fi
+  done
+
+  secrets_tpl="$repo_root/home/dot_config/zsh/conf.d/private_work-secrets.zsh.tmpl"
+  empty_out="$tmp/work-secrets-empty.zsh"
+  mkdir -p "$tmp/empty-dest"
+  # darwin is a work machine with an empty account: the template must render
+  # nothing and must not look up `op` (the PATH guard fails the command if it does).
+  if ! run_chezmoi \
+    --source "$repo_root" \
+    --config "$repo_root/tests/profiles/darwin.toml" \
+    --destination "$tmp/empty-dest" \
+    --persistent-state "$tmp/empty.state" \
+    execute-template <"$secrets_tpl" >"$empty_out"
+  then
+    echo "work-secrets: empty opWorkAccount execute-template failed" >&2
+    failed_checks=1
+  elif [[ -s "$empty_out" ]]; then
+    echo "work-secrets: empty opWorkAccount rendered output" >&2
+    failed_checks=1
+  fi
+
+  op_stub_dir="$tmp/op-stub"
+  mkdir -p "$op_stub_dir"
+  op_stub="$op_stub_dir/op"
+  cat >"$op_stub" <<'STUB'
+#!/usr/bin/env bash
+set -euo pipefail
+log_file="${OP_STUB_LOG:-}"
+if [[ -n "$log_file" ]]; then
+  printf '%s\n' "$*" >>"$log_file"
+fi
+case "${1:-}" in
+  --version)
+    printf '%s\n' '2.30.0'
+    ;;
+  account)
+    shift
+    if [[ "${1:-}" != "list" ]]; then
+      printf 'unexpected op account command: %s\n' "$*" >&2
+      exit 1
+    fi
+    printf '%s' '[{"url":"employee.1password.com","email":"stub@example.com","user_uuid":"stub-user-uuid","account_uuid":"stub-account-uuid"}]'
+    ;;
+  read)
+    shift
+    ref=""
+    account=""
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        --no-newline)
+          shift
+          ;;
+        --account)
+          if [[ $# -lt 2 ]]; then
+            printf 'op read --account missing value\n' >&2
+            exit 1
+          fi
+          account="$2"
+          shift 2
+          ;;
+        --session)
+          printf 'op read must not receive --session when prompt=false\n' >&2
+          exit 1
+          ;;
+        *)
+          if [[ -n "$ref" ]]; then
+            printf 'unexpected op read arg: %s\n' "$1" >&2
+            exit 1
+          fi
+          ref="$1"
+          shift
+          ;;
+      esac
+    done
+    if [[ "$account" != "stub-account-uuid" ]]; then
+      printf 'unexpected --account: %s\n' "$account" >&2
+      exit 1
+    fi
+    case "$ref" in
+      op://Employee/Gemfury/credential)
+        printf '%s' "stub'token"
+        ;;
+      op://Employee/Gemfury/org)
+        printf '%s' 'stub-org'
+        ;;
+      *)
+        printf 'unexpected ref: %s\n' "$ref" >&2
+        exit 1
+        ;;
+    esac
+    ;;
+  *)
+    printf 'unexpected op stub invocation: %s\n' "$*" >&2
+    exit 1
+    ;;
+esac
+STUB
+  chmod +x "$op_stub"
+  if ! shellcheck "$op_stub"; then
+    echo "work-secrets: shellcheck failed for op stub" >&2
+    failed_checks=1
+  fi
+
+  secrets_stub="$tmp/secrets-stub.toml"
+  sed 's/^opWorkAccount = ""/opWorkAccount = "employee.1password.com"/' \
+    "$repo_root/tests/profiles/darwin.toml" >"$secrets_stub"
+  if ! grep -q '^opWorkAccount = "employee.1password.com"$' "$secrets_stub"; then
+    echo "work-secrets: failed to set opWorkAccount in stub config" >&2
+    return 1
+  fi
+  {
+    printf '\n[onepassword]\n'
+    printf 'command = "%s"\n' "$op_stub"
+    printf 'prompt = false\n'
+  } >>"$secrets_stub"
+
+  secrets_out="$tmp/secrets-out"
+  secrets_state="$tmp/secrets.state"
+  mkdir -p "$secrets_out"
+  rendered="$secrets_out/.config/zsh/conf.d/work-secrets.zsh"
+  # Pass the log path only to this chezmoi run. run_chezmoi inherits the
+  # environment, and this function is not the end of the script.
+  OP_STUB_LOG="$tmp/op-stub.log"
+  export OP_STUB_LOG
+  : >"$OP_STUB_LOG"
+  if ! run_chezmoi \
+    --source "$repo_root" \
+    --config "$secrets_stub" \
+    --destination "$secrets_out" \
+    --persistent-state "$secrets_state" \
+    apply --exclude=scripts,externals --force
+  then
+    echo "work-secrets: apply failed" >&2
+    failed_checks=1
+    unset OP_STUB_LOG
+    return "$failed_checks"
+  fi
+
+  expected_log="$tmp/op-stub-expected.log"
+  cat >"$expected_log" <<'EOF'
+account list --format=json
+read --no-newline op://Employee/Gemfury/credential --account stub-account-uuid
+read --no-newline op://Employee/Gemfury/org --account stub-account-uuid
+EOF
+  if ! cmp -s "$expected_log" "$OP_STUB_LOG"; then
+    echo "work-secrets: unexpected op invocations" >&2
+    diff -u "$expected_log" "$OP_STUB_LOG" >&2 || true
+    failed_checks=1
+  fi
+  unset OP_STUB_LOG
+
+  if [[ ! -f "$rendered" ]]; then
+    echo "work-secrets: apply did not create work-secrets.zsh" >&2
+    failed_checks=1
+    return "$failed_checks"
+  fi
+  if ! mode="$(file_mode "$rendered")"; then
+    echo "work-secrets: stat failed for work-secrets.zsh" >&2
+    failed_checks=1
+  elif [[ "$mode" != "600" ]]; then
+    echo "work-secrets: mode is ${mode}, want 600" >&2
+    failed_checks=1
+  fi
+  if [[ "$(tail -c 1 "$rendered" | wc -l)" -eq 0 ]]; then
+    echo "work-secrets: rendered file has no trailing newline" >&2
+    failed_checks=1
+  fi
+  if grep -q '^$' "$rendered"; then
+    echo "work-secrets: rendered file has a blank line" >&2
+    failed_checks=1
+  fi
+  if ! zsh -n "$rendered" >&2; then
+    echo "work-secrets: zsh -n failed" >&2
+    failed_checks=1
+  fi
+  if ! zsh_out="$(zsh -f -c 'source "$1"; print -r -- "$FURY_AUTH" "$UV_INDEX_GEMFURY_USERNAME" "$UV_INDEX_GEMFURY_PASSWORD" "$PIP_EXTRA_INDEX_URL"' _ "$rendered")"; then
+    echo "work-secrets: sourcing rendered file failed" >&2
+    failed_checks=1
+    return "$failed_checks"
+  fi
+  if [[ "$zsh_out" != "stub'token stub'token NOPASS https://stub'token:@pypi.fury.io/stub-org/" ]]; then
+    echo "work-secrets: unexpected env vars: ${zsh_out}" >&2
+    failed_checks=1
+  fi
+
+  return "$failed_checks"
+}
+
 if ! load_prompt_args; then
   exit 1
 fi
@@ -401,6 +623,13 @@ for name in "${profile_names[@]}"; do
     failed=1
   fi
 done
+
+if test_work_secrets; then
+  echo "work-secrets pass"
+else
+  echo "work-secrets fail"
+  failed=1
+fi
 
 template="${repo_root}/home/.chezmoi.toml.tmpl"
 if [[ ! -f "$template" ]]; then
