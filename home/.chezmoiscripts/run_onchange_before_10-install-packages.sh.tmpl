@@ -19,7 +19,7 @@ cask {{ . | quote }}
 {{ end -}}
 {{ end -}}
 EOF
-{{ if or (eq .platform "linux") (eq .platform "wsl") -}}
+{{ if eq .platform "linux" -}}
 # No 1password-cli formula. The cask can install a Linux binary, but it only
 # links op; 1Password's apt package also creates the onepassword-cli group
 # and setgid bit the desktop app integration needs.

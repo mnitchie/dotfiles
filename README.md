@@ -4,11 +4,19 @@ Personal machine setup managed with [chezmoi](https://www.chezmoi.io/). A single
 
 ## New machine
 
+**Before the one-liner:** for work secrets at apply time, set up 1Password first — or leave the work account prompt blank and secrets are skipped.
+
+| Platform | 1Password before apply |
+| --- | --- |
+| macOS, Linux desktop | Desktop app installed and signed in; **Integrate with 1Password CLI** and the SSH agent enabled in the app |
+| Headless Linux | If you will enter a work account at init, install the [1Password CLI](https://developer.1password.com/docs/cli/get-started/) yourself and run `op account add` before apply. Chezmoi's apt install of the CLI happens in that same apply, before `op signin`, so it is too late to add the account then. Otherwise leave the prompt blank |
+| WSL | [1Password CLI on Windows](https://developer.1password.com/docs/cli/get-started/) (e.g. `winget install AgileBits.1Password.CLI`); enable CLI integration in the Windows 1Password app (chezmoi uses `op.exe`, not Linux `op`) |
+
 ```bash
-sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin" init --apply mnitchie
+sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin" -- --use-builtin-git=true init --apply mnitchie
 ```
 
-The installer puts `chezmoi` in `~/.local/bin`; update it later with `chezmoi upgrade`. `mnitchie` resolves to [github.com/mnitchie/dotfiles](https://github.com/mnitchie/dotfiles). To try a branch before it is merged, add `--branch <name>` (keep `-b "$HOME/.local/bin"` before `init`).
+The installer puts `chezmoi` in `~/.local/bin`; update it later with `chezmoi upgrade`. `mnitchie` resolves to [github.com/mnitchie/dotfiles](https://github.com/mnitchie/dotfiles). The `--` after `-b` ends the installer's flags. Without it, `get.chezmoi.io` (POSIX `getopts`) treats `--use-builtin-git` as an illegal option and exits before chezmoi runs. `--use-builtin-git=true` is a chezmoi global flag and must come before `init`. It forces chezmoi's built-in git so a Mac without Xcode Command Line Tools can still clone: `/usr/bin/git` on a fresh Mac is a stub, and the default `auto` value would run that stub. Homebrew's installer, which runs during apply, installs the Command Line Tools itself. To try a branch before it is merged, add `--branch <name>` after `init`.
 
 `chezmoi init` runs `home/.chezmoi.toml.tmpl` and asks once (via `prompt*Once`). Bool prompts have no default — answer **y** or **n**:
 
@@ -79,7 +87,7 @@ The old setup used a bare git repo at `~/.my_dotfiles_git` with `work-tree=$HOME
 5. **Install chezmoi and apply** (same as [New machine](#new-machine)):
 
    ```bash
-   sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin" init --apply mnitchie
+   sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin" -- --use-builtin-git=true init --apply mnitchie
    ```
 
 6. Open a **new terminal** and check:
@@ -106,7 +114,7 @@ See the chezmoi [daily operations](https://www.chezmoi.io/user-guide/daily-opera
 
 Aliases (when `chezmoi` / `zsh` are on `PATH`): **`editz`** → `chezmoi edit --apply ~/.config/zsh/.zshrc`; **`reloadz`** → `exec zsh`.
 
-Layout: `.chezmoiroot` points at `home/` in this repo. The only **zsh** file in `$HOME` is `~/.zshenv` (it sets `ZDOTDIR=~/.config/zsh`). Chezmoi also manages under `$HOME`: `~/.ssh`, `~/.config`, `~/.local`, `~/.cache`, and `~/.agents`. `dot_zshrc` loads `conf.d/*.zsh` in order, **skipping** `_*.zsh`, then `local.zsh` if present.
+Layout: `.chezmoiroot` points at `home/` in this repo. The only **zsh** file in `$HOME` is `~/.zshenv` (it sets `ZDOTDIR=~/.config/zsh`). Chezmoi also manages `~/.ssh`, `~/.config`, `~/.agents`, and on non-headless Linux desktop `~/.local/share/fonts` (JetBrainsMono Nerd Font). `dot_zshrc` loads `conf.d/*.zsh` in order, **skipping** `_*.zsh`, then `local.zsh` if present.
 
 ## Add a Homebrew package
 
@@ -164,7 +172,7 @@ On work machines with `opWorkAccount` set, `chezmoi apply` reads three items fro
 | **Cloudflare** | `credential` |
 | **Google Stitch** | `credential` |
 
-That renders `~/.config/zsh/conf.d/work-secrets.zsh` (mode 0600) with `FURY_AUTH`, `UV_INDEX_GEMFURY_USERNAME`, `UV_INDEX_GEMFURY_PASSWORD` (`NOPASS`), `PIP_EXTRA_INDEX_URL`, `CLOUDFLARE_API_TOKEN`, and `GOOGLE_STITCH_API_KEY`. Chezmoi runs `op` during apply. With the 1Password desktop app and CLI integration enabled, approve the app prompt (Touch ID on macOS, system authentication on Linux). On headless Linux (no app), run `op account add` once; chezmoi then runs `op signin`, which asks for the account password in the terminal.
+That renders `~/.config/zsh/conf.d/work-secrets.zsh` (mode 0600) with `FURY_AUTH`, `UV_INDEX_GEMFURY_USERNAME`, `UV_INDEX_GEMFURY_PASSWORD` (`NOPASS`), `PIP_EXTRA_INDEX_URL`, `CLOUDFLARE_API_TOKEN`, and `GOOGLE_STITCH_API_KEY`. Chezmoi runs `op` (or `op.exe` on WSL) during apply. With the desktop app and CLI integration enabled, approve the app prompt (Touch ID on macOS, Windows or Linux app authentication). On headless Linux (no app), install the 1Password CLI and run `op account add` before apply; chezmoi then runs `op signin`, which asks for the account password in the terminal.
 
 Not managed by chezmoi — create on the machine:
 

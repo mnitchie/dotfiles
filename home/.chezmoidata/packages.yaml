@@ -20,7 +20,7 @@ brews:
   - zsh-autosuggestions
 
 # darwin only. There is no 1password-cli formula. The cask's Linux build only
-# links the op binary, so Linux and WSL use 1Password's apt repository.
+# links the op binary, so Linux uses 1Password's apt repository (WSL uses op.exe on Windows).
 casks:
   - 1password-cli
   - font-jetbrains-mono-nerd-font

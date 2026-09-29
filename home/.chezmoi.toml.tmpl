@@ -51,3 +51,12 @@ name = {{ $name | quote }}
 email = {{ $email | quote }}
 signingKey = {{ $signingKey | quote }}
 workSigningKey = {{ $workSigningKey | quote }}
+{{- if eq $platform "darwin" }}
+
+[onepassword]
+command = "/opt/homebrew/bin/op"
+{{- else if eq $platform "wsl" }}
+
+[onepassword]
+command = "op.exe"
+{{- end }}
