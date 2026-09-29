@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+{{ if or (eq .platform "linux") (eq .platform "wsl") }}
+apt_packages=(
+{{- range .apt }}
+  {{ . | quote }}
+{{- end }}
+{{- if and (eq .platform "linux") (not .headless) }}
+{{- range .aptLinuxDesktop }}
+  {{ . | quote }}
+{{- end }}
+{{- end }}
+)
+sudo DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get update
+sudo DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get install -y "${apt_packages[@]}"
+
+{{ end -}}
+if [[ ! -x "{{ .brewPrefix }}/bin/brew" ]]; then
+  # bash -c "$(curl ...)" exits 0 when curl fails, and chezmoi would record this run_once script as done.
+  installer="$(/usr/bin/mktemp)"
+  trap '/bin/rm -f "$installer"' EXIT
+  /usr/bin/curl -fsSL -o "${installer}" https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh
+  # With NONINTERACTIVE set, install.sh uses `sudo -n` and aborts with
+  # "Insufficient permissions" instead of prompting. Skip it when sudo needs a password.
+  if /usr/bin/sudo -n true 2>/dev/null; then
+    NONINTERACTIVE=1 /bin/bash "${installer}"
+  else
+    /bin/bash "${installer}"
+  fi
+fi

@@ -1,0 +1,41 @@
+# Homebrew's aws-vault formula tracks the maintained ByteNess fork.
+# https://github.com/ByteNess/aws-vault
+brews:
+  - aws-vault
+  - awscli
+  - bat
+  - eza
+  - fnm
+  - fzf
+  - gh
+  - git
+  - git-delta
+  - jq
+  - pre-commit
+  - ripgrep
+  - starship
+  - tree
+  - uv
+  - vim
+  - zsh-autosuggestions
+
+# darwin only. There is no 1password-cli formula. The cask's Linux build only
+# links the op binary, so Linux uses 1Password's apt repository (WSL uses op.exe on Windows).
+casks:
+  - 1password-cli
+  - font-jetbrains-mono-nerd-font
+
+# Homebrew's Debian/Ubuntu requirements, plus the login shell.
+# https://docs.brew.sh/Homebrew-on-Linux
+apt:
+  - build-essential
+  - procps
+  - curl
+  - file
+  - git
+  - less
+  - zsh
+
+# Non-headless linux only. fontconfig provides fc-cache for the Nerd Font.
+aptLinuxDesktop:
+  - fontconfig

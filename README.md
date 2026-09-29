@@ -1,53 +1,207 @@
 # Dotfiles
 
-My dotfiles and some setup stuff.
+Personal machine setup managed with [chezmoi](https://www.chezmoi.io/). A single `chezmoi init --apply` installs Homebrew, CLI tools, shell, git, SSH, and editor config as real files under `$HOME` (copy mode, not symlinks). Supported platforms: **Apple Silicon macOS** (Intel Macs are refused at init), **Linux** (headless server or desktop with 1Password), and **WSL**.
 
-## Getting started
+## New machine
 
-This just needs to get executed once per machine
+**Before the one-liner:** for work secrets at apply time, set up 1Password first — or leave the work account prompt blank and secrets are skipped.
 
-`curl -Lks https://raw.githubusercontent.com/mnitchie/dotfiles/main/bin/setup.sh | /bin/bash`
-
-This will clone the repo to `$HOME/.my_dotfiles_git` as a bare repo, but set the home directory to the workdir.
-.zshenv creates a `config` alias that will run all git commands in the bare repo.
-
-## Other scripts
-
-Other scripts in bin/ should be executed after the above is done, as it will assume some things are already set up (like xdg dirs). If you're on a mac, for instance, run `./bin/mac_setup.sh`. For wsl, run `./bin/wsl_setup.sh`
-
-## And then
-
-Then `source $HOME/.config/zsh/.zshrc` or restart your terminal
-
-## Usage
-
-The setup script sets ignoreUntracked to true for everything in the repo (home directory), so new files must always be added explicitly.
+| Platform | 1Password before apply |
+| --- | --- |
+| macOS, Linux desktop | Desktop app installed and signed in; **Integrate with 1Password CLI** and the SSH agent enabled in the app |
+| Headless Linux | If you will enter a work account at init, install the [1Password CLI](https://developer.1password.com/docs/cli/get-started/) yourself and run `op account add` before apply. Chezmoi's apt install of the CLI happens in that same apply, before `op signin`, so it is too late to add the account then. Otherwise leave the prompt blank |
+| WSL | [1Password CLI on Windows](https://developer.1password.com/docs/cli/get-started/) (e.g. `winget install AgileBits.1Password.CLI`); enable CLI integration in the Windows 1Password app (chezmoi uses `op.exe`, not Linux `op`) |
 
 ```bash
-config status
-config add .vimrc
-config commit -m "Add vimrc"
-config add .config/redshift.conf
-config commit -m "Add redshift config"
-config push
+sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin" -- --use-builtin-git=true init --apply mnitchie
 ```
 
-## Secrets and environment variables
-When needed, export secrets in .config/includes/secrets.sh, which is `source`d in `.zshrc`. Never check the secrets file in
+The installer puts `chezmoi` in `~/.local/bin`; update it later with `chezmoi upgrade`. `mnitchie` resolves to [github.com/mnitchie/dotfiles](https://github.com/mnitchie/dotfiles). The `--` after `-b` passes the rest of the flags to chezmoi; put `--use-builtin-git=true` before `init` so a Mac without Command Line Tools can still clone (Homebrew installs the CLT during apply). Add `--branch <name>` after `init` to test an unmerged branch.
 
-### AWS Vault
-https://github.com/99designs/aws-vault
+`chezmoi init` runs `home/.chezmoi.toml.tmpl` and asks once (via `prompt*Once`). Bool prompts have no default — answer **y** or **n**:
 
-Open the keychain, File -> Add Keychain, aws-vault.keychain.db (or something)
-https://github.com/99designs/aws-vault/issues/534#issuecomment-596971986
-https://github.com/99designs/aws-vault/issues/534#issuecomment-596578706
+| Prompt | When | Notes |
+| --- | --- | --- |
+| Work machine | always | |
+| Work email | if work | |
+| Work 1Password account sign-in address (blank to skip work secrets) | if work | Example: `employee.1password.com` |
+| Headless Linux (no 1Password app) | Linux only | **y** disables git commit signing and the 1Password SSH agent |
+| Windows user folder name | WSL only | Folder name under `C:\Users\` (spaces allowed) |
 
-## References
+On **macOS**, install the **1Password desktop app** separately (from [1Password](https://1password.com/) or the Mac App Store). Git commit signing and the SSH agent use the app’s `op-ssh-sign`; Homebrew only installs the **1Password CLI** (`op`). The first Homebrew install may also prompt for **sudo** and **Xcode Command Line Tools**. On **Linux and WSL**, **apt** and Homebrew setup may prompt for **sudo**.
 
-1. [Primary reference](https://www.atlassian.com/git/tutorials/dotfiles)
-    * Roughly copied to [this doc](./docs/HowToStoreDotfiles.html) in case the link dies
-    * https://github.com/durdn/cfg
-    * https://news.ycombinator.com/item?id=11071754
-2. https://dotfiles.github.io/
-3. https://www.freecodecamp.org/news/dotfiles-what-is-a-dot-file-and-how-to-create-it-in-mac-and-linux
-4. https://github.com/ActionScripted/dotfiles
+## Moving a machine off the old bare repo
+
+The old setup used a bare git repo at `~/.my_dotfiles_git` with `work-tree=$HOME`. Chezmoi replaces that entirely. **Move** old paths aside into a dated backup directory — do not delete them until you are satisfied with the new setup.
+
+1. **See what the old repo tracked** (optional, for your records):
+
+   ```bash
+   git --git-dir=$HOME/.my_dotfiles_git --work-tree=$HOME ls-files
+   ```
+
+2. **Move the old dotfiles aside** into a backup directory:
+
+   ```bash
+   backup=~/dotfiles-backup-$(date +%Y%m%d)
+   mkdir -p "$backup"
+   [ -e "$HOME/.my_dotfiles_git" ] && mv -n "$HOME/.my_dotfiles_git" "$backup/"
+   [ -e "$HOME/.oh-my-zsh" ] && mv -n "$HOME/.oh-my-zsh" "$backup/"
+   [ -e "$HOME/.zshenv" ] && mv -n "$HOME/.zshenv" "$backup/"
+   [ -e "$HOME/.config/zsh" ] && mv -n "$HOME/.config/zsh" "$backup/"
+   [ -e "$HOME/.config/includes" ] && mv -n "$HOME/.config/includes" "$backup/"
+   [ -e "$HOME/.vimrc" ] && mv -n "$HOME/.vimrc" "$backup/"
+   [ -d "$HOME/.vim" ] && mv -n "$HOME/.vim" "$backup/"
+   [ -e "$HOME/.config/git/config" ] && mv -n "$HOME/.config/git/config" "$backup/"
+   [ -e "$HOME/.config/gh/config.yml" ] && mv -n "$HOME/.config/gh/config.yml" "$backup/"
+   ```
+
+   If you had secrets in `~/.config/includes/secrets.sh`, copy that file somewhere private before or after the move. Chezmoi does **not** recreate it — use 1Password or `~/.config/zsh/local.zsh` for secrets going forward.
+
+   Leave `~/.config/gh/hosts.yml` in place (GitHub login state). On **WSL**, you no longer need any old `socat` / `npiperelay` SSH-agent relay from the previous Linux includes.
+
+3. **Carry over zsh history** to the new `HISTFILE` (`~/.local/state/zsh/history`). The old setup did not set `HISTFILE`; oh-my-zsh/zsh wrote `~/.zsh_history` and sometimes `$ZDOTDIR/.zsh_history` (`~/.config/zsh/.zsh_history`). Step 2 moved `~/.config/zsh` into `$backup`, so look at `~/.zsh_history` and `$backup/zsh/.zsh_history` (reuse the same `backup=...` as step 2 if you are in a new shell):
+
+   ```bash
+   backup=~/dotfiles-backup-$(date +%Y%m%d)
+   mkdir -p "$HOME/.local/state/zsh"
+   hist="$HOME/.local/state/zsh/history"
+   if [ ! -e "$hist" ]; then
+     for old in "$HOME/.zsh_history" "$backup/zsh/.zsh_history"; do
+       if [ -f "$old" ]; then
+         cp -a "$old" "$hist"
+         break
+       fi
+     done
+   fi
+   ```
+
+   If `$hist` already exists, merge manually or append from the old file instead of overwriting.
+
+4. **Keep existing SSH host entries.** Chezmoi replaces `~/.ssh/config` but `Include`s `~/.ssh/config.local` first. Leave `~/.ssh` keys, `known_hosts`, and `authorized_keys` in place; only rename the config file if you do not already have a local override:
+
+   ```bash
+   [ -f "$HOME/.ssh/config" ] && [ ! -e "$HOME/.ssh/config.local" ] && mv "$HOME/.ssh/config" "$HOME/.ssh/config.local"
+   ```
+
+5. **Install chezmoi and apply** (same as [New machine](#new-machine)):
+
+   ```bash
+   sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin" -- --use-builtin-git=true init --apply mnitchie
+   ```
+
+6. Open a **new terminal** and check:
+
+   ```bash
+   chezmoi doctor
+   chezmoi status
+   ```
+
+## Daily use
+
+See the chezmoi [daily operations](https://www.chezmoi.io/user-guide/daily-operations/) guide. Edits belong in the **source** tree (`home/`): use `chezmoi cd` or `chezmoi edit` with **destination** paths (e.g. `~/.config/zsh/.zshrc`).
+
+| Command | Purpose |
+| --- | --- |
+| `chezmoi edit <target>` | Edit source for a destination file |
+| `chezmoi diff` | Show pending changes |
+| `chezmoi apply` | Apply the source state to `$HOME` |
+| `chezmoi update` | Pull the source repo and apply |
+| `chezmoi re-add` | Copy non-template files you changed under `$HOME` back into the source |
+| `chezmoi cd` | Shell in the source directory |
+
+`chezmoi re-add` does **not** update templates (including `~/.zshenv`, `~/.config/zsh/.zshrc`, `~/.config/git/config`, `~/.ssh/config`, and `work.zsh`). Use `chezmoi edit` for those.
+
+Aliases (when `chezmoi` / `zsh` are on `PATH`): **`editz`** → `chezmoi edit --apply ~/.config/zsh/.zshrc`; **`reloadz`** → `exec zsh`.
+
+Layout: `.chezmoiroot` points at `home/` in this repo. The only **zsh** file in `$HOME` is `~/.zshenv` (it sets `ZDOTDIR=~/.config/zsh`). Chezmoi also manages `~/.ssh`, `~/.config`, `~/.agents`, and on non-headless Linux desktop `~/.local/share/fonts` (JetBrainsMono Nerd Font). `dot_zshrc` loads `conf.d/*.zsh` in order, **skipping** `_*.zsh`, then `local.zsh` if present.
+
+## Add a Homebrew package
+
+Edit `home/.chezmoidata/packages.yaml` in the source (via `chezmoi edit` or after `chezmoi cd`):
+
+- **`brews`** — all platforms (`brew bundle` in `run_onchange_before_10-install-packages.sh.tmpl`)
+- **`casks`** — macOS only (e.g. `font-jetbrains-mono-nerd-font`, `1password-cli`)
+- **`apt`** — Debian/Ubuntu packages before Homebrew on Linux and WSL
+- **`aptLinuxDesktop`** — non-headless Linux only (e.g. `fontconfig`)
+
+Run `chezmoi apply` so the package script re-runs.
+
+## Add a file on one platform only
+
+Add a template under `home/` whose **entire body** is inside `{{- if ... -}}` … `{{- end -}}` (no stray newlines outside the trim markers). Example: `conf.d/20-darwin.zsh.tmpl` uses `{{- if eq .platform "darwin" -}}`.
+
+Template **data keys** (from `home/.chezmoi.toml.tmpl`; other templates use these, not `.chezmoi.os` / `.chezmoi.arch`):
+
+| Key | Meaning |
+| --- | --- |
+| `platform` | `darwin`, `linux`, or `wsl` |
+| `brewPrefix` | Homebrew prefix |
+| `headless` | Linux without 1Password desktop app |
+| `work` | Work machine |
+| `workEmail` | Git email for work repos |
+| `opWorkAccount` | Work 1Password account sign-in address (if work; blank skips work secrets) |
+| `windowsUser` | `C:\Users\<name>` folder name (WSL) |
+| `name`, `email` | Personal git identity |
+| `signingKey`, `workSigningKey` | SSH signing public keys |
+
+Use `home/.chezmoiignore` only for whole directories.
+
+## Work config
+
+When **Work machine** is true, apply produces:
+
+- `~/.config/zsh/conf.d/work.zsh` (from `home/dot_config/zsh/conf.d/work.zsh.tmpl`)
+- `~/.config/zsh/conf.d/work-secrets.zsh` (from `private_work-secrets.zsh.tmpl`, when `opWorkAccount` is set)
+- `~/.config/git/work`
+- `[includeIf "gitdir:~/git/strata/"]` → `work` in git config
+
+When a job ends, in the **source**: clear or trim `work.zsh.tmpl` and add `home/dot_config/zsh/conf.d/_<company>.zsh` with the old contents. `_*.zsh` files are never sourced.
+
+## Secrets and local overrides
+
+Nothing secret is committed. Templates may use `onepasswordRead` for 1Password values.
+
+### Work secrets
+
+On work machines with `opWorkAccount` set, `chezmoi apply` reads three items from the **Private** vault in your **work** 1Password account (the sign-in address you set as `opWorkAccount` at init — not the Private vault on a personal account). `op read` resolves vault name, item title, then field label, so item type does not matter (a Login item with added custom fields works). Each item needs these field labels. Labels must be unique within the item, and item titles must be unique in the vault.
+
+| Item | Field labels |
+| --- | --- |
+| **Gemfury** | `credential`, `org` |
+| **Cloudflare** | `credential` |
+| **Google Stitch** | `credential` |
+
+That renders `~/.config/zsh/conf.d/work-secrets.zsh` (mode 0600) with `FURY_AUTH`, `UV_INDEX_GEMFURY_USERNAME`, `UV_INDEX_GEMFURY_PASSWORD` (`NOPASS`), `PIP_EXTRA_INDEX_URL`, `CLOUDFLARE_API_TOKEN`, and `GOOGLE_STITCH_API_KEY`. Chezmoi runs `op` (or `op.exe` on WSL) during apply. With the desktop app and CLI integration enabled, approve the app prompt (Touch ID on macOS, Windows or Linux app authentication). On headless Linux (no app), install the 1Password CLI and run `op account add` before apply; chezmoi then runs `op signin`, which asks for the account password in the terminal.
+
+Not managed by chezmoi — create on the machine:
+
+| File | Role |
+| --- | --- |
+| `~/.config/zsh/local.zsh` | Extra shell (sourced last) |
+| `~/.config/git/local` | Git overrides |
+| `~/.ssh/config.local` | SSH overrides on macOS / Linux desktop |
+
+On **WSL**, `ssh` and git use Windows `ssh.exe`. Linux `~/.ssh/config` and `config.local` are **not** read. Put SSH **host** entries in `%USERPROFILE%\.ssh\config` on Windows.
+
+## Terminal font (JetBrainsMono Nerd Font)
+
+Starship needs a [Nerd Font](https://www.nerdfonts.com/). Use **JetBrainsMono Nerd Font** in the terminal you type into.
+
+| Platform | Install | Set in terminal |
+| --- | --- | --- |
+| macOS | Cask `font-jetbrains-mono-nerd-font` | Terminal.app, iTerm2, etc. |
+| Linux desktop | `~/.local/share/fonts/JetBrainsMonoNerdFont` via `.chezmoiexternal.toml.tmpl` | Desktop terminal |
+| WSL | Windows: `winget install --id DEVCOM.JetBrainsMonoNerdFont` or [nerdfonts.com](https://www.nerdfonts.com/) | Windows Terminal → Font |
+| Linux server | — | Font on the SSH client machine |
+
+## Externals
+
+`home/.chezmoiexternal.toml.tmpl` fetches at apply time:
+
+- `~/.agents/skills/gh-stack/`
+- Linux desktop Nerd Font (see above)
+
+## CI
+
+[`.github/workflows/bootstrap.yml`](.github/workflows/bootstrap.yml) runs on pull requests and on pushes to `main`, on `ubuntu-latest` and `macos-latest`. It runs the one-liner above with `--branch` and non-interactive answers for the prompts that machine asks, checks that a second `chezmoi apply` changes nothing, and smoke-tests login `zsh`, core CLI tools, and the delta pager.

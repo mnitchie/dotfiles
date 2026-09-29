@@ -1,0 +1,39 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
+# [aws] has one style, so the profile is a custom module (red for production).
+# $duration stays on [aws], which reads AWS_CREDENTIAL_EXPIRATION, then
+# AWS_SESSION_EXPIRATION, then AWSUME_EXPIRATION. The () group is omitted when
+# $duration is empty, so force_display prints nothing without an expiration.
+# $aws precedes $custom in the default prompt, so the timer leads the profile.
+
+[aws]
+force_display = true
+format = '([$duration]($style) )'
+
+[custom.aws]
+description = "AWS profile (non-production)"
+shell = ["sh"]
+when = '''
+profile=${AWS_VAULT:-${AWS_PROFILE:-}}
+[ -n "$profile" ] || exit 1
+case "$profile" in
+  *-prod|*production*|*cleardata*) exit 1 ;;
+esac
+'''
+command = 'printf %s "${AWS_VAULT:-${AWS_PROFILE:-}}"'
+style = "fg:black bg:green"
+format = '[$output]($style) '
+
+[custom.aws_prod]
+description = "AWS profile (production)"
+shell = ["sh"]
+when = '''
+profile=${AWS_VAULT:-${AWS_PROFILE:-}}
+case "$profile" in
+  *-prod|*production*|*cleardata*) exit 0 ;;
+esac
+exit 1
+'''
+command = 'printf %s "${AWS_VAULT:-${AWS_PROFILE:-}}"'
+style = "fg:yellow bg:red"
+format = '[$output]($style) '

@@ -1,0 +1,86 @@
+name: bootstrap
+
+# pull_request already tests feature branches, including forks. Limiting push
+# to main avoids a second run of the same commit.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bootstrap:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: chezmoi init --apply
+        shell: bash
+        env:
+          # Fork PRs: the head branch is not in the base repo.
+          CHEZMOI_REPO: ${{ github.event.pull_request.head.repo.clone_url || format('https://github.com/{0}.git', github.repository) }}
+          CHEZMOI_BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: |
+          set -euo pipefail
+          args=(
+            --use-builtin-git=true
+            --no-tty
+            init
+            --apply
+            --branch "$CHEZMOI_BRANCH"
+            --promptBool='Work machine=false'
+          )
+          # Linux asks this; macOS does not. chezmoi ignores unused --prompt*
+          # values, so a typo in an extra flag would not fail the job.
+          if [[ "$(uname -s)" == Linux ]]; then
+            args+=(--promptBool='Headless Linux (no 1Password app)=true')
+          fi
+          args+=("$CHEZMOI_REPO")
+          sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin" -- "${args[@]}"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: idempotent apply
+        shell: bash
+        run: |
+          set -euo pipefail
+          chezmoi apply
+          status="$(chezmoi status)"
+          if [[ -n "$status" ]]; then
+            printf '%s\n' "$status" >&2
+            exit 1
+          fi
+
+      - name: smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The ubuntu runner image leaves /usr/share/zsh group-writable, so
+          # compaudit rejects it and compinit aborts. Stock Ubuntu is 755.
+          if [[ "$(uname -s)" == Linux ]]; then
+            sudo chmod -R go-w /usr/share/zsh
+          fi
+          stderr="$(mktemp)"
+          trap 'rm -f "$stderr"' EXIT
+          zsh -l -i -c 'exit' 2>"$stderr"
+          if [[ -s "$stderr" ]]; then
+            cat "$stderr" >&2
+            zsh -l -c 'autoload -Uz compaudit; compaudit' || true
+            exit 1
+          fi
+          zsh -l -i -c 'command -v starship fnm uv delta fzf'
+          # `git config --global` reads only ~/.gitconfig when that file exists
+          # (macOS runner images ship one) and ignores ~/.config/git/config.
+          # Commands merge both files. Run outside a repo so local config
+          # cannot override the pager.
+          test "$(git -C "$HOME" config --get core.pager)" = delta
+          if [[ "$(uname -s)" == Linux ]]; then
+            test "$(getent passwd "$(id -un)" | cut -d: -f7)" = /usr/bin/zsh
+          fi

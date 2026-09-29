@@ -1,0 +1,51 @@
+{{- $program := "" -}}
+{{- if eq .platform "darwin" -}}
+{{-   $program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign" -}}
+{{- else if eq .platform "wsl" -}}
+{{-   $program = printf "/mnt/c/Users/%s/AppData/Local/Microsoft/WindowsApps/op-ssh-sign-wsl.exe" .windowsUser -}}
+{{- else if not .headless -}}
+{{-   $program = "/opt/1Password/op-ssh-sign" -}}
+{{- end -}}
+[user]
+	name = {{ .name | quote }}
+	email = {{ .email }}
+	signingkey = {{ .signingKey | quote }}
+[credential "https://github.com"]
+	# An empty value resets credential helpers inherited from the system config.
+	helper =
+	helper = {{ printf "!%s/bin/gh auth git-credential" .brewPrefix | quote }}
+[credential "https://gist.github.com"]
+	helper =
+	helper = {{ printf "!%s/bin/gh auth git-credential" .brewPrefix | quote }}
+[gpg]
+	format = ssh
+{{ if $program -}}
+[gpg "ssh"]
+	program = {{ $program | quote }}
+{{ end -}}
+[commit]
+	gpgsign = {{ if .headless }}false{{ else }}true{{ end }}
+[push]
+	autoSetupRemote = true
+[pull]
+	rebase = true
+[init]
+	defaultBranch = main
+[core]
+	pager = delta
+{{- if eq .platform "wsl" }}
+	# 1Password's WSL integration authenticates Git through Windows ssh.exe.
+	sshCommand = ssh.exe
+{{- end }}
+[interactive]
+	diffFilter = "delta --color-only"
+[delta]
+	navigate = true
+[merge]
+	conflictStyle = zdiff3
+{{ if .work -}}
+[includeIf "gitdir:~/git/strata/"]
+	path = work
+{{ end -}}
+[include]
+	path = local

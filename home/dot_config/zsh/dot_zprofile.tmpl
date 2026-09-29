@@ -1,0 +1,15 @@
+{{ if eq .platform "darwin" -}}
+# /etc/zprofile runs path_helper, which rebuilds PATH from /etc/paths and
+# /etc/paths.d and leaves Homebrew behind the system directories. It also
+# sets MANPATH with no leading colon, so man ignores its default path.
+if [[ -d "{{ .brewPrefix }}" ]]; then
+  typeset -U path
+  path=("{{ .brewPrefix }}/bin" "{{ .brewPrefix }}/sbin" $path)
+  [[ -z ${MANPATH-} ]] || {
+    export MANPATH="${MANPATH%"${MANPATH##*[!:]}"}"
+    export MANPATH=":${MANPATH#"${MANPATH%%[!:]*}"}"
+  }
+fi
+typeset -U path
+path=("${HOME}/.local/bin" $path)
+{{ end -}}

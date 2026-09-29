@@ -1,0 +1,5 @@
+{{- if eq .platform "darwin" -}}
+if (( $+commands[powermetrics] && $+commands[grep] )); then
+  alias temp='sudo powermetrics --samplers smc | grep -E -i "temp|fan"'
+fi
+{{ end -}}
