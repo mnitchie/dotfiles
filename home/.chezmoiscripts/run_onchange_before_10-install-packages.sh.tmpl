@@ -19,6 +19,19 @@ cask {{ . | quote }}
 {{ end -}}
 {{ end -}}
 EOF
+# compaudit checks each fpath dir and its parent for group/world write and for
+# ownership by root or the user. site-functions is on fpath; a hit makes
+# compinit abort when there is no tty. chmod needs the owner (or root).
+for _dir in \
+  "{{ .brewPrefix }}/share" \
+  "{{ .brewPrefix }}/share/zsh" \
+  "{{ .brewPrefix }}/share/zsh/site-functions"
+do
+  if [[ -d "${_dir}" && ( -O "${_dir}" || ${EUID} -eq 0 ) ]]; then
+    chmod go-w "${_dir}"
+  fi
+done
+unset _dir
 {{ if eq .platform "linux" -}}
 # No 1password-cli formula. The cask can install a Linux binary, but it only
 # links op; 1Password's apt package also creates the onepassword-cli group
