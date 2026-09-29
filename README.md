@@ -156,11 +156,11 @@ Nothing secret is committed. Templates may use `onepasswordRead` for 1Password v
 
 ### Work secrets
 
-On work machines with `opWorkAccount` set, `chezmoi apply` reads three **Employee** vault items (API Credential type):
+On work machines with `opWorkAccount` set, `chezmoi apply` reads three items from the **Private** vault in your **work** 1Password account (the sign-in address you set as `opWorkAccount` at init — not the Private vault on a personal account). `op read` resolves vault name, item title, then field label, so item type does not matter (a Login item with added custom fields works). Each item needs these field labels. Labels must be unique within the item, and item titles must be unique in the vault.
 
-| Item | Fields used |
+| Item | Field labels |
 | --- | --- |
-| **Gemfury** | `credential` (token); custom text `org` (org slug) |
+| **Gemfury** | `credential`, `org` |
 | **Cloudflare** | `credential` |
 | **Google Stitch** | `credential` |
 

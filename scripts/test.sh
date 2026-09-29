@@ -463,16 +463,16 @@ case "${1:-}" in
       exit 1
     fi
     case "$ref" in
-      op://Employee/Gemfury/credential)
+      op://Private/Gemfury/credential)
         printf '%s' "stub'token"
         ;;
-      op://Employee/Gemfury/org)
+      op://Private/Gemfury/org)
         printf '%s' 'stub-org'
         ;;
-      op://Employee/Cloudflare/credential)
+      op://Private/Cloudflare/credential)
         printf '%s' 'stub-cf'
         ;;
-      'op://Employee/Google Stitch/credential')
+      'op://Private/Google Stitch/credential')
         printf '%s' 'stub-stitch'
         ;;
       *)
@@ -531,10 +531,10 @@ STUB
   expected_log="$tmp/op-stub-expected.log"
   cat >"$expected_log" <<'EOF'
 account list --format=json
-read --no-newline op://Employee/Gemfury/credential --account stub-account-uuid
-read --no-newline op://Employee/Gemfury/org --account stub-account-uuid
-read --no-newline op://Employee/Cloudflare/credential --account stub-account-uuid
-read --no-newline op://Employee/Google Stitch/credential --account stub-account-uuid
+read --no-newline op://Private/Gemfury/credential --account stub-account-uuid
+read --no-newline op://Private/Gemfury/org --account stub-account-uuid
+read --no-newline op://Private/Cloudflare/credential --account stub-account-uuid
+read --no-newline op://Private/Google Stitch/credential --account stub-account-uuid
 EOF
   if ! cmp -s "$expected_log" "$OP_STUB_LOG"; then
     echo "work-secrets: unexpected op invocations" >&2
