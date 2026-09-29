@@ -16,7 +16,7 @@ Personal machine setup managed with [chezmoi](https://www.chezmoi.io/). A single
 sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin" -- --use-builtin-git=true init --apply mnitchie
 ```
 
-The installer puts `chezmoi` in `~/.local/bin`; update it later with `chezmoi upgrade`. `mnitchie` resolves to [github.com/mnitchie/dotfiles](https://github.com/mnitchie/dotfiles). The `--` after `-b` ends the installer's flags. Without it, `get.chezmoi.io` (POSIX `getopts`) treats `--use-builtin-git` as an illegal option and exits before chezmoi runs. `--use-builtin-git=true` is a chezmoi global flag and must come before `init`. It forces chezmoi's built-in git so a Mac without Xcode Command Line Tools can still clone: `/usr/bin/git` on a fresh Mac is a stub, and the default `auto` value would run that stub. Homebrew's installer, which runs during apply, installs the Command Line Tools itself. To try a branch before it is merged, add `--branch <name>` after `init`.
+The installer puts `chezmoi` in `~/.local/bin`; update it later with `chezmoi upgrade`. `mnitchie` resolves to [github.com/mnitchie/dotfiles](https://github.com/mnitchie/dotfiles). The `--` after `-b` passes the rest of the flags to chezmoi; put `--use-builtin-git=true` before `init` so a Mac without Command Line Tools can still clone (Homebrew installs the CLT during apply). Add `--branch <name>` after `init` to test an unmerged branch.
 
 `chezmoi init` runs `home/.chezmoi.toml.tmpl` and asks once (via `prompt*Once`). Bool prompts have no default — answer **y** or **n**:
 
@@ -202,13 +202,6 @@ Starship needs a [Nerd Font](https://www.nerdfonts.com/). Use **JetBrainsMono Ne
 - `~/.agents/skills/gh-stack/`
 - Linux desktop Nerd Font (see above)
 
-## Testing
+## CI
 
-```bash
-scripts/install-test-tools.sh
-scripts/test.sh
-```
-
-`TEST_EXTERNALS=1` includes externals (network). `scripts/test.sh --keep` leaves the render tree for inspection. Profiles: `tests/profiles/`.
-
-**CI:** `.github/workflows/test.yml` on `ubuntu-latest` and `macos-latest` with `TEST_EXTERNALS=1`; macOS checks `brewPrefix = "/opt/homebrew"` from `home/.chezmoi.toml.tmpl`.
+[`.github/workflows/bootstrap.yml`](.github/workflows/bootstrap.yml) runs on pull requests and on pushes to `main`, on `ubuntu-latest` and `macos-latest`. It runs the one-liner above with `--branch` and non-interactive answers for the prompts that machine asks, checks that a second `chezmoi apply` changes nothing, and smoke-tests login `zsh`, core CLI tools, and the delta pager.
