@@ -1,279 +1,39 @@
 "$schema" = 'https://starship.rs/config-schema.json'
 
-# Private-use glyphs from Starship's Nerd Font preset. The terminal font is
-# JetBrainsMono Nerd Font.
-
-[directory]
-read_only = " 󰌾"
-
-[git_branch]
-symbol = " "
-
-[hostname]
-ssh_symbol = " "
-
-# [aws] has one style and no `when`, so it cannot turn red only for production
-# profiles. The custom modules below replace it and show a segment whenever
-# AWS_VAULT or AWS_PROFILE is set, which is what force_display is for.
+# [aws] has one style, so the profile is a custom module (red for production).
+# $duration stays on [aws], which reads AWS_CREDENTIAL_EXPIRATION, then
+# AWS_SESSION_EXPIRATION, then AWSUME_EXPIRATION. The () group is omitted when
+# $duration is empty, so force_display prints nothing without an expiration.
+# $aws precedes $custom in the default prompt, so the timer leads the profile.
 
 [aws]
-disabled = true
+force_display = true
+format = '([$duration]($style) )'
 
 [custom.aws]
-description = "AWS profile"
+description = "AWS profile (non-production)"
 shell = ["sh"]
 when = '''
 profile=${AWS_VAULT:-${AWS_PROFILE:-}}
 [ -n "$profile" ] || exit 1
-case $profile in
-  *-prod|*production*|cleardata) exit 1 ;;
+case "$profile" in
+  *-prod|*production*|*cleardata*) exit 1 ;;
 esac
 '''
-command = '''
-# macOS date(1) has no -d and GNU date(1) has no -j, so parse RFC3339 here.
-profile=${AWS_VAULT:-${AWS_PROFILE:-}}
-exp=${AWS_CREDENTIAL_EXPIRATION:-${AWS_SESSION_EXPIRATION:-}}
-
-strip0() {
-  v=$1
-  while :; do
-    case $v in
-      0) break ;;
-      0*) v=${v#0} ;;
-      *) break ;;
-    esac
-  done
-  printf '%s' "${v:-0}"
-}
-
-days_from_civil() {
-  y=$1
-  m=$(strip0 "$2")
-  d=$(strip0 "$3")
-  if [ "$m" -le 2 ]; then
-    y=$((y - 1))
-  fi
-  if [ "$y" -ge 0 ]; then
-    era=$((y / 400))
-  else
-    era=$(((y - 399) / 400))
-  fi
-  yoe=$((y - era * 400))
-  if [ "$m" -gt 2 ]; then
-    madj=$((m - 3))
-  else
-    madj=$((m + 9))
-  fi
-  doy=$(((153 * madj + 2) / 5 + d - 1))
-  doe=$((yoe * 365 + yoe / 4 - yoe / 100 + doy))
-  days=$((era * 146097 + doe - 719468))
-}
-
-epoch_of() {
-  case $1 in
-    [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]*) ;;
-    *) return 1 ;;
-  esac
-  s=$1
-  case $s in
-    *.*)
-      pre=${s%%.*}
-      post=${s#*.}
-      zone=${post#"${post%%[Zz+-]*}"}
-      s=${pre}${zone}
-      ;;
-  esac
-  y=${s%%-*}
-  rest=${s#*-}
-  mo=${rest%%-*}
-  rest=${rest#*-}
-  d=${rest%%T*}
-  rest=${rest#*T}
-  H=$(strip0 "${rest%%:*}")
-  rest=${rest#*:}
-  M=$(strip0 "${rest%%:*}")
-  rest=${rest#*:}
-  S=${rest%%[!0-9]*}
-  zone=${rest#"$S"}
-  S=$(strip0 "$S")
-  days_from_civil "$y" "$mo" "$d"
-  case $zone in
-    ""|Z|z) off=0 ;;
-    +*:*)
-      zh=${zone#+}
-      zh=${zh%%:*}
-      zm=${zone#*:}
-      zm=${zm%%[!0-9]*}
-      off=$(($(strip0 "$zh") * 3600 + $(strip0 "$zm") * 60))
-      ;;
-    -*:*)
-      zh=${zone#-}
-      zh=${zh%%:*}
-      zm=${zone#*:}
-      zm=${zm%%[!0-9]*}
-      off=$((-($(strip0 "$zh") * 3600 + $(strip0 "$zm") * 60)))
-      ;;
-    *) return 1 ;;
-  esac
-  epoch=$((days * 86400 + H * 3600 + M * 60 + S - off))
-}
-
-if [ -z "$exp" ]; then
-  printf '%s' "$profile"
-  exit 0
-fi
-epoch_of "$exp" || {
-  printf '%s' "$profile"
-  exit 0
-}
-exp_epoch=$epoch
-now=$(LC_ALL=C date -u "+%Y-%m-%dT%H:%M:%SZ") || {
-  printf '%s' "$profile"
-  exit 0
-}
-epoch_of "$now" || {
-  printf '%s' "$profile"
-  exit 0
-}
-remaining=$((exp_epoch - epoch))
-if [ "$remaining" -lt 0 ]; then
-  printf '%s expired' "$profile"
-  exit 0
-fi
-hours=$((remaining / 3600))
-minutes=$(((remaining % 3600) / 60))
-printf '%s (%sh%sm left)' "$profile" "$hours" "$minutes"
-'''
+command = 'printf %s "${AWS_VAULT:-${AWS_PROFILE:-}}"'
 style = "fg:black bg:green"
-symbol = " "
-format = '[$symbol$output]($style) '
+format = '[$output]($style) '
 
 [custom.aws_prod]
-description = "AWS production profile"
+description = "AWS profile (production)"
 shell = ["sh"]
 when = '''
 profile=${AWS_VAULT:-${AWS_PROFILE:-}}
-case $profile in
-  *-prod|*production*|cleardata) exit 0 ;;
+case "$profile" in
+  *-prod|*production*|*cleardata*) exit 0 ;;
 esac
 exit 1
 '''
-command = '''
-# macOS date(1) has no -d and GNU date(1) has no -j, so parse RFC3339 here.
-profile=${AWS_VAULT:-${AWS_PROFILE:-}}
-exp=${AWS_CREDENTIAL_EXPIRATION:-${AWS_SESSION_EXPIRATION:-}}
-
-strip0() {
-  v=$1
-  while :; do
-    case $v in
-      0) break ;;
-      0*) v=${v#0} ;;
-      *) break ;;
-    esac
-  done
-  printf '%s' "${v:-0}"
-}
-
-days_from_civil() {
-  y=$1
-  m=$(strip0 "$2")
-  d=$(strip0 "$3")
-  if [ "$m" -le 2 ]; then
-    y=$((y - 1))
-  fi
-  if [ "$y" -ge 0 ]; then
-    era=$((y / 400))
-  else
-    era=$(((y - 399) / 400))
-  fi
-  yoe=$((y - era * 400))
-  if [ "$m" -gt 2 ]; then
-    madj=$((m - 3))
-  else
-    madj=$((m + 9))
-  fi
-  doy=$(((153 * madj + 2) / 5 + d - 1))
-  doe=$((yoe * 365 + yoe / 4 - yoe / 100 + doy))
-  days=$((era * 146097 + doe - 719468))
-}
-
-epoch_of() {
-  case $1 in
-    [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]*) ;;
-    *) return 1 ;;
-  esac
-  s=$1
-  case $s in
-    *.*)
-      pre=${s%%.*}
-      post=${s#*.}
-      zone=${post#"${post%%[Zz+-]*}"}
-      s=${pre}${zone}
-      ;;
-  esac
-  y=${s%%-*}
-  rest=${s#*-}
-  mo=${rest%%-*}
-  rest=${rest#*-}
-  d=${rest%%T*}
-  rest=${rest#*T}
-  H=$(strip0 "${rest%%:*}")
-  rest=${rest#*:}
-  M=$(strip0 "${rest%%:*}")
-  rest=${rest#*:}
-  S=${rest%%[!0-9]*}
-  zone=${rest#"$S"}
-  S=$(strip0 "$S")
-  days_from_civil "$y" "$mo" "$d"
-  case $zone in
-    ""|Z|z) off=0 ;;
-    +*:*)
-      zh=${zone#+}
-      zh=${zh%%:*}
-      zm=${zone#*:}
-      zm=${zm%%[!0-9]*}
-      off=$(($(strip0 "$zh") * 3600 + $(strip0 "$zm") * 60))
-      ;;
-    -*:*)
-      zh=${zone#-}
-      zh=${zh%%:*}
-      zm=${zone#*:}
-      zm=${zm%%[!0-9]*}
-      off=$((-($(strip0 "$zh") * 3600 + $(strip0 "$zm") * 60)))
-      ;;
-    *) return 1 ;;
-  esac
-  epoch=$((days * 86400 + H * 3600 + M * 60 + S - off))
-}
-
-if [ -z "$exp" ]; then
-  printf '%s' "$profile"
-  exit 0
-fi
-epoch_of "$exp" || {
-  printf '%s' "$profile"
-  exit 0
-}
-exp_epoch=$epoch
-now=$(LC_ALL=C date -u "+%Y-%m-%dT%H:%M:%SZ") || {
-  printf '%s' "$profile"
-  exit 0
-}
-epoch_of "$now" || {
-  printf '%s' "$profile"
-  exit 0
-}
-remaining=$((exp_epoch - epoch))
-if [ "$remaining" -lt 0 ]; then
-  printf '%s expired' "$profile"
-  exit 0
-fi
-hours=$((remaining / 3600))
-minutes=$(((remaining % 3600) / 60))
-printf '%s (%sh%sm left)' "$profile" "$hours" "$minutes"
-'''
+command = 'printf %s "${AWS_VAULT:-${AWS_PROFILE:-}}"'
 style = "fg:yellow bg:red"
-symbol = " "
-format = '[$symbol$output]($style) '
-
+format = '[$output]($style) '
