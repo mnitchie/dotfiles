@@ -5,6 +5,7 @@ headless = false
 work = true
 workEmail = "mike.nitchie@example.com"
 opWorkAccount = ""
+opPersonalAccount = ""
 windowsUser = ""
 name = "Mike Nitchie"
 email = "mikenitchie@gmail.com"

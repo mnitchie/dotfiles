@@ -48,7 +48,7 @@ mkdir -p \
   "$tmp/xdg/data" \
   "$tmp/xdg/state"
 
-# The work-secrets test points chezmoi at an absolute stub via onepassword.command.
+# The secrets tests point chezmoi at an absolute stub via onepassword.command.
 # Anything else that looks up `op` on PATH must fail instead of calling a real CLI.
 op_guard_dir="$tmp/op-guard"
 mkdir -p "$op_guard_dir"
@@ -372,42 +372,9 @@ test_profile() {
   return "$failed_checks"
 }
 
-test_work_secrets() {
-  local failed_checks=0
-  local name out secrets_stub secrets_out secrets_state
-  local op_stub_dir op_stub secrets_tpl rendered
-  local empty_out expected_log mode zsh_out
-
-  for name in "${profile_names[@]}"; do
-    out="$tmp/${name}"
-    if [[ -f "$out/.config/zsh/conf.d/work-secrets.zsh" ]]; then
-      echo "work-secrets: ${name} profile rendered work-secrets.zsh unexpectedly" >&2
-      failed_checks=1
-    fi
-  done
-
-  secrets_tpl="$repo_root/home/dot_config/zsh/conf.d/private_work-secrets.zsh.tmpl"
-  empty_out="$tmp/work-secrets-empty.zsh"
-  mkdir -p "$tmp/empty-dest"
-  # darwin is a work machine with an empty account: the template must render
-  # nothing and must not look up `op` (the PATH guard fails the command if it does).
-  if ! run_chezmoi \
-    --source "$repo_root" \
-    --config "$repo_root/tests/profiles/darwin.toml" \
-    --destination "$tmp/empty-dest" \
-    --persistent-state "$tmp/empty.state" \
-    execute-template <"$secrets_tpl" >"$empty_out"
-  then
-    echo "work-secrets: empty opWorkAccount execute-template failed" >&2
-    failed_checks=1
-  elif [[ -s "$empty_out" ]]; then
-    echo "work-secrets: empty opWorkAccount rendered output" >&2
-    failed_checks=1
-  fi
-
-  op_stub_dir="$tmp/op-stub"
-  mkdir -p "$op_stub_dir"
-  op_stub="$op_stub_dir/op"
+write_op_stub() {
+  local op_stub="$1"
+  mkdir -p "$(dirname "$op_stub")"
   cat >"$op_stub" <<'STUB'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -425,7 +392,7 @@ case "${1:-}" in
       printf 'unexpected op account command: %s\n' "$*" >&2
       exit 1
     fi
-    printf '%s' '[{"url":"employee.1password.com","email":"stub@example.com","user_uuid":"stub-user-uuid","account_uuid":"stub-account-uuid"}]'
+    printf '%s' '[{"url":"employee.1password.com","email":"stub@example.com","user_uuid":"stub-work-user-uuid","account_uuid":"stub-work-account-uuid"},{"url":"personal.1password.com","email":"personal@example.com","user_uuid":"stub-personal-user-uuid","account_uuid":"stub-personal-account-uuid"}]'
     ;;
   read)
     shift
@@ -458,19 +425,37 @@ case "${1:-}" in
           ;;
       esac
     done
-    if [[ "$account" != "stub-account-uuid" ]]; then
-      printf 'unexpected --account: %s\n' "$account" >&2
-      exit 1
-    fi
-    case "$ref" in
-      op://Employee/Gemfury/credential)
-        printf '%s' "stub'token"
+    case "$account" in
+      stub-work-account-uuid)
+        case "$ref" in
+          'op://Employee/Gemfury/credential')
+            printf '%s' "stub'token"
+            ;;
+          'op://Employee/Gemfury/org')
+            printf '%s' 'stub-org'
+            ;;
+          *)
+            printf 'unexpected work ref: %s\n' "$ref" >&2
+            exit 1
+            ;;
+        esac
         ;;
-      op://Employee/Gemfury/org)
-        printf '%s' 'stub-org'
+      stub-personal-account-uuid)
+        case "$ref" in
+          'op://Private/Cloudflare/credential')
+            printf '%s' 'stub-cf'
+            ;;
+          'op://Private/Google Stitch/credential')
+            printf '%s' 'stub-stitch'
+            ;;
+          *)
+            printf 'unexpected personal ref: %s\n' "$ref" >&2
+            exit 1
+            ;;
+        esac
         ;;
       *)
-        printf 'unexpected ref: %s\n' "$ref" >&2
+        printf 'unexpected --account: %s\n' "$account" >&2
         exit 1
         ;;
     esac
@@ -482,31 +467,105 @@ case "${1:-}" in
 esac
 STUB
   chmod +x "$op_stub"
-  if ! shellcheck "$op_stub"; then
-    echo "work-secrets: shellcheck failed for op stub" >&2
-    failed_checks=1
-  fi
+}
 
-  secrets_stub="$tmp/secrets-stub.toml"
-  sed 's/^opWorkAccount = ""/opWorkAccount = "employee.1password.com"/' \
-    "$repo_root/tests/profiles/darwin.toml" >"$secrets_stub"
-  if ! grep -q '^opWorkAccount = "employee.1password.com"$' "$secrets_stub"; then
-    echo "work-secrets: failed to set opWorkAccount in stub config" >&2
-    return 1
-  fi
+append_onepassword_stub_config() {
+  local config="$1"
+  local op_stub="$2"
   {
     printf '\n[onepassword]\n'
     printf 'command = "%s"\n' "$op_stub"
     printf 'prompt = false\n'
-  } >>"$secrets_stub"
+  } >>"$config"
+}
 
-  secrets_out="$tmp/secrets-out"
-  secrets_state="$tmp/secrets.state"
-  mkdir -p "$secrets_out"
-  rendered="$secrets_out/.config/zsh/conf.d/work-secrets.zsh"
-  # Pass the log path only to this chezmoi run. run_chezmoi inherits the
-  # environment, and this function is not the end of the script.
-  OP_STUB_LOG="$tmp/op-stub.log"
+assert_op_stub_log() {
+  local label="$1"
+  local expected_log="$2"
+  local actual_log="$3"
+  if ! cmp -s "$expected_log" "$actual_log"; then
+    echo "${label}: unexpected op invocations" >&2
+    diff -u "$expected_log" "$actual_log" >&2 || true
+    return 1
+  fi
+  return 0
+}
+
+assert_rendered_secrets_zsh() {
+  local label="$1"
+  local rendered="$2"
+  local zsh_source_cmd="$3"
+  local expected_zsh_out="$4"
+  local mode zsh_out
+
+  if [[ ! -f "$rendered" ]]; then
+    echo "${label}: apply did not create $(basename "$rendered")" >&2
+    return 1
+  fi
+  if ! mode="$(file_mode "$rendered")"; then
+    echo "${label}: stat failed for $(basename "$rendered")" >&2
+    return 1
+  fi
+  if [[ "$mode" != "600" ]]; then
+    echo "${label}: mode is ${mode}, want 600" >&2
+    return 1
+  fi
+  if [[ "$(tail -c 1 "$rendered" | wc -l)" -eq 0 ]]; then
+    echo "${label}: rendered file has no trailing newline" >&2
+    return 1
+  fi
+  if grep -q '^$' "$rendered"; then
+    echo "${label}: rendered file has a blank line" >&2
+    return 1
+  fi
+  if ! zsh -n "$rendered" >&2; then
+    echo "${label}: zsh -n failed" >&2
+    return 1
+  fi
+  if ! zsh_out="$(zsh -f -c "$zsh_source_cmd" _ "$rendered")"; then
+    echo "${label}: sourcing rendered file failed" >&2
+    return 1
+  fi
+  if [[ "$zsh_out" != "$expected_zsh_out" ]]; then
+    echo "${label}: unexpected env vars: ${zsh_out}" >&2
+    return 1
+  fi
+  return 0
+}
+
+assert_empty_secrets_template() {
+  local label="$1"
+  local secrets_tpl="$2"
+  local profile="$3"
+  local state="$4"
+  local empty_dest="$5"
+  local empty_out="$6"
+
+  mkdir -p "$empty_dest"
+  if ! run_chezmoi \
+    --source "$repo_root" \
+    --config "$profile" \
+    --destination "$empty_dest" \
+    --persistent-state "$state" \
+    execute-template <"$secrets_tpl" >"$empty_out"
+  then
+    echo "${label}: empty account execute-template failed" >&2
+    return 1
+  fi
+  if [[ -s "$empty_out" ]]; then
+    echo "${label}: empty account rendered output" >&2
+    return 1
+  fi
+  return 0
+}
+
+apply_secrets_with_stub() {
+  local secrets_stub="$1"
+  local secrets_out="$2"
+  local secrets_state="$3"
+  local op_log="$4"
+
+  OP_STUB_LOG="$op_log"
   export OP_STUB_LOG
   : >"$OP_STUB_LOG"
   if ! run_chezmoi \
@@ -516,56 +575,175 @@ STUB
     --persistent-state "$secrets_state" \
     apply --exclude=scripts,externals --force
   then
-    echo "work-secrets: apply failed" >&2
-    failed_checks=1
     unset OP_STUB_LOG
-    return "$failed_checks"
-  fi
-
-  expected_log="$tmp/op-stub-expected.log"
-  cat >"$expected_log" <<'EOF'
-account list --format=json
-read --no-newline op://Employee/Gemfury/credential --account stub-account-uuid
-read --no-newline op://Employee/Gemfury/org --account stub-account-uuid
-EOF
-  if ! cmp -s "$expected_log" "$OP_STUB_LOG"; then
-    echo "work-secrets: unexpected op invocations" >&2
-    diff -u "$expected_log" "$OP_STUB_LOG" >&2 || true
-    failed_checks=1
+    return 1
   fi
   unset OP_STUB_LOG
+  return 0
+}
 
-  if [[ ! -f "$rendered" ]]; then
-    echo "work-secrets: apply did not create work-secrets.zsh" >&2
+test_work_secrets() {
+  local failed_checks=0
+  local name out secrets_stub secrets_out secrets_state
+  local op_stub secrets_tpl rendered
+  local empty_out expected_log
+
+  for name in "${profile_names[@]}"; do
+    out="$tmp/${name}"
+    if [[ -f "$out/.config/zsh/conf.d/work-secrets.zsh" ]]; then
+      echo "work-secrets: ${name} profile rendered work-secrets.zsh unexpectedly" >&2
+      failed_checks=1
+    fi
+  done
+
+  secrets_tpl="$repo_root/home/dot_config/zsh/conf.d/private_work-secrets.zsh.tmpl"
+  empty_out="$tmp/work-secrets-empty.zsh"
+  # darwin is a work machine with an empty account: the template must render
+  # nothing and must not look up `op` (the PATH guard fails the command if it does).
+  if ! assert_empty_secrets_template \
+    work-secrets \
+    "$secrets_tpl" \
+    "$repo_root/tests/profiles/darwin.toml" \
+    "$tmp/work-empty.state" \
+    "$tmp/empty-dest-work" \
+    "$empty_out"
+  then
+    failed_checks=1
+  fi
+
+  op_stub="$tmp/op-stub/op"
+  write_op_stub "$op_stub"
+  if ! shellcheck "$op_stub"; then
+    echo "work-secrets: shellcheck failed for op stub" >&2
+    failed_checks=1
+  fi
+
+  secrets_stub="$tmp/work-secrets-stub.toml"
+  sed 's/^opWorkAccount = ""/opWorkAccount = "employee.1password.com"/' \
+    "$repo_root/tests/profiles/darwin.toml" >"$secrets_stub"
+  if ! grep -q '^opWorkAccount = "employee.1password.com"$' "$secrets_stub"; then
+    echo "work-secrets: failed to set opWorkAccount in stub config" >&2
+    return 1
+  fi
+  append_onepassword_stub_config "$secrets_stub" "$op_stub"
+
+  secrets_out="$tmp/work-secrets-out"
+  secrets_state="$tmp/work-secrets.state"
+  mkdir -p "$secrets_out"
+  rendered="$secrets_out/.config/zsh/conf.d/work-secrets.zsh"
+  if ! apply_secrets_with_stub \
+    "$secrets_stub" \
+    "$secrets_out" \
+    "$secrets_state" \
+    "$tmp/work-op-stub.log"
+  then
+    echo "work-secrets: apply failed" >&2
     failed_checks=1
     return "$failed_checks"
   fi
-  if ! mode="$(file_mode "$rendered")"; then
-    echo "work-secrets: stat failed for work-secrets.zsh" >&2
-    failed_checks=1
-  elif [[ "$mode" != "600" ]]; then
-    echo "work-secrets: mode is ${mode}, want 600" >&2
-    failed_checks=1
-  fi
-  if [[ "$(tail -c 1 "$rendered" | wc -l)" -eq 0 ]]; then
-    echo "work-secrets: rendered file has no trailing newline" >&2
-    failed_checks=1
-  fi
-  if grep -q '^$' "$rendered"; then
-    echo "work-secrets: rendered file has a blank line" >&2
+
+  expected_log="$tmp/work-op-stub-expected.log"
+  cat >"$expected_log" <<'EOF'
+account list --format=json
+read --no-newline op://Employee/Gemfury/credential --account stub-work-account-uuid
+read --no-newline op://Employee/Gemfury/org --account stub-work-account-uuid
+EOF
+  if ! assert_op_stub_log work-secrets "$expected_log" "$tmp/work-op-stub.log"; then
     failed_checks=1
   fi
-  if ! zsh -n "$rendered" >&2; then
-    echo "work-secrets: zsh -n failed" >&2
+
+  # shellcheck disable=SC2016
+  local work_zsh_cmd='source "$1"; print -r -- "$FURY_AUTH" "$UV_INDEX_GEMFURY_USERNAME" "$UV_INDEX_GEMFURY_PASSWORD" "$PIP_EXTRA_INDEX_URL"'
+  if ! assert_rendered_secrets_zsh \
+    work-secrets \
+    "$rendered" \
+    "$work_zsh_cmd" \
+    "stub'token stub'token NOPASS https://stub'token:@pypi.fury.io/stub-org/"
+  then
     failed_checks=1
   fi
-  if ! zsh_out="$(zsh -f -c 'source "$1"; print -r -- "$FURY_AUTH" "$UV_INDEX_GEMFURY_USERNAME" "$UV_INDEX_GEMFURY_PASSWORD" "$PIP_EXTRA_INDEX_URL"' _ "$rendered")"; then
-    echo "work-secrets: sourcing rendered file failed" >&2
+
+  return "$failed_checks"
+}
+
+test_personal_secrets() {
+  local failed_checks=0
+  local name out secrets_stub secrets_out secrets_state
+  local op_stub secrets_tpl rendered
+  local empty_out expected_log
+
+  for name in "${profile_names[@]}"; do
+    out="$tmp/${name}"
+    if [[ -f "$out/.config/zsh/conf.d/personal-secrets.zsh" ]]; then
+      echo "personal-secrets: ${name} profile rendered personal-secrets.zsh unexpectedly" >&2
+      failed_checks=1
+    fi
+  done
+
+  secrets_tpl="$repo_root/home/dot_config/zsh/conf.d/private_personal-secrets.zsh.tmpl"
+  empty_out="$tmp/personal-secrets-empty.zsh"
+  if ! assert_empty_secrets_template \
+    personal-secrets \
+    "$secrets_tpl" \
+    "$repo_root/tests/profiles/linux-server.toml" \
+    "$tmp/personal-empty.state" \
+    "$tmp/empty-dest-personal" \
+    "$empty_out"
+  then
+    failed_checks=1
+  fi
+
+  op_stub="$tmp/op-stub/op"
+  if [[ ! -x "$op_stub" ]]; then
+    write_op_stub "$op_stub"
+    if ! shellcheck "$op_stub"; then
+      echo "personal-secrets: shellcheck failed for op stub" >&2
+      failed_checks=1
+    fi
+  fi
+
+  secrets_stub="$tmp/personal-secrets-stub.toml"
+  sed 's/^opPersonalAccount = ""/opPersonalAccount = "personal.1password.com"/' \
+    "$repo_root/tests/profiles/linux-server.toml" >"$secrets_stub"
+  if ! grep -q '^opPersonalAccount = "personal.1password.com"$' "$secrets_stub"; then
+    echo "personal-secrets: failed to set opPersonalAccount in stub config" >&2
+    return 1
+  fi
+  append_onepassword_stub_config "$secrets_stub" "$op_stub"
+
+  secrets_out="$tmp/personal-secrets-out"
+  secrets_state="$tmp/personal-secrets.state"
+  mkdir -p "$secrets_out"
+  rendered="$secrets_out/.config/zsh/conf.d/personal-secrets.zsh"
+  if ! apply_secrets_with_stub \
+    "$secrets_stub" \
+    "$secrets_out" \
+    "$secrets_state" \
+    "$tmp/personal-op-stub.log"
+  then
+    echo "personal-secrets: apply failed" >&2
     failed_checks=1
     return "$failed_checks"
   fi
-  if [[ "$zsh_out" != "stub'token stub'token NOPASS https://stub'token:@pypi.fury.io/stub-org/" ]]; then
-    echo "work-secrets: unexpected env vars: ${zsh_out}" >&2
+
+  expected_log="$tmp/personal-op-stub-expected.log"
+  cat >"$expected_log" <<'EOF'
+account list --format=json
+read --no-newline op://Private/Cloudflare/credential --account stub-personal-account-uuid
+read --no-newline op://Private/Google Stitch/credential --account stub-personal-account-uuid
+EOF
+  if ! assert_op_stub_log personal-secrets "$expected_log" "$tmp/personal-op-stub.log"; then
+    failed_checks=1
+  fi
+
+  # shellcheck disable=SC2016
+  local personal_zsh_cmd='source "$1"; print -r -- "$CLOUDFLARE_API_TOKEN" "$GOOGLE_STITCH_API_KEY"'
+  if ! assert_rendered_secrets_zsh \
+    personal-secrets \
+    "$rendered" \
+    "$personal_zsh_cmd" \
+    'stub-cf stub-stitch'
+  then
     failed_checks=1
   fi
 
@@ -628,6 +806,13 @@ if test_work_secrets; then
   echo "work-secrets pass"
 else
   echo "work-secrets fail"
+  failed=1
+fi
+
+if test_personal_secrets; then
+  echo "personal-secrets pass"
+else
+  echo "personal-secrets fail"
   failed=1
 fi
 

@@ -3,4 +3,5 @@
 --promptBool=Work machine=false
 --promptString=Work email=
 --promptString=Work 1Password account sign-in address (blank to skip work secrets)=
+--promptString=Personal 1Password account sign-in address (blank to skip personal secrets)=
 --promptString=Windows user folder name=
