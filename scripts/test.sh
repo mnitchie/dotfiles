@@ -469,6 +469,12 @@ case "${1:-}" in
       op://Employee/Gemfury/org)
         printf '%s' 'stub-org'
         ;;
+      op://Employee/Cloudflare/credential)
+        printf '%s' 'stub-cf'
+        ;;
+      'op://Employee/Google Stitch/credential')
+        printf '%s' 'stub-stitch'
+        ;;
       *)
         printf 'unexpected ref: %s\n' "$ref" >&2
         exit 1
@@ -527,6 +533,8 @@ STUB
 account list --format=json
 read --no-newline op://Employee/Gemfury/credential --account stub-account-uuid
 read --no-newline op://Employee/Gemfury/org --account stub-account-uuid
+read --no-newline op://Employee/Cloudflare/credential --account stub-account-uuid
+read --no-newline op://Employee/Google Stitch/credential --account stub-account-uuid
 EOF
   if ! cmp -s "$expected_log" "$OP_STUB_LOG"; then
     echo "work-secrets: unexpected op invocations" >&2
@@ -559,12 +567,12 @@ EOF
     echo "work-secrets: zsh -n failed" >&2
     failed_checks=1
   fi
-  if ! zsh_out="$(zsh -f -c 'source "$1"; print -r -- "$FURY_AUTH" "$UV_INDEX_GEMFURY_USERNAME" "$UV_INDEX_GEMFURY_PASSWORD" "$PIP_EXTRA_INDEX_URL"' _ "$rendered")"; then
+  if ! zsh_out="$(zsh -f -c 'source "$1"; print -r -- "$FURY_AUTH" "$UV_INDEX_GEMFURY_USERNAME" "$UV_INDEX_GEMFURY_PASSWORD" "$PIP_EXTRA_INDEX_URL" "$CLOUDFLARE_API_TOKEN" "$GOOGLE_STITCH_API_KEY"' _ "$rendered")"; then
     echo "work-secrets: sourcing rendered file failed" >&2
     failed_checks=1
     return "$failed_checks"
   fi
-  if [[ "$zsh_out" != "stub'token stub'token NOPASS https://stub'token:@pypi.fury.io/stub-org/" ]]; then
+  if [[ "$zsh_out" != "stub'token stub'token NOPASS https://stub'token:@pypi.fury.io/stub-org/ stub-cf stub-stitch" ]]; then
     echo "work-secrets: unexpected env vars: ${zsh_out}" >&2
     failed_checks=1
   fi

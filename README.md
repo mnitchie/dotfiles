@@ -16,7 +16,7 @@ The installer puts `chezmoi` in `~/.local/bin`; update it later with `chezmoi up
 | --- | --- | --- |
 | Work machine | always | |
 | Work email | if work | |
-| Work 1Password account sign-in address (blank to skip work secrets) | if work | Example: `employee.1password.com`. Leave blank to skip Gemfury secrets |
+| Work 1Password account sign-in address (blank to skip work secrets) | if work | Example: `employee.1password.com` |
 | Headless Linux (no 1Password app) | Linux only | **y** disables git commit signing and the 1Password SSH agent |
 | Windows user folder name | WSL only | Folder name under `C:\Users\` (spaces allowed) |
 
@@ -154,9 +154,17 @@ When a job ends, in the **source**: clear or trim `work.zsh.tmpl` and add `home/
 
 Nothing secret is committed. Templates may use `onepasswordRead` for 1Password values.
 
-### Work secrets (Gemfury)
+### Work secrets
 
-On work machines with `opWorkAccount` set, `chezmoi apply` reads one 1Password item: vault **Employee**, title **Gemfury** (API Credential). Field `credential` is the Gemfury token; custom text field `org` is the org slug. That renders `~/.config/zsh/conf.d/work-secrets.zsh` (mode 0600), which exports `FURY_AUTH`, `UV_INDEX_GEMFURY_USERNAME`, `UV_INDEX_GEMFURY_PASSWORD` (`NOPASS`), and `PIP_EXTRA_INDEX_URL` for Gemfury PyPI. Chezmoi runs `op` during apply. With the 1Password desktop app and CLI integration enabled, approve the app prompt (Touch ID on macOS, system authentication on Linux). On headless Linux (no app), run `op account add` once; chezmoi then runs `op signin`, which asks for the account password in the terminal.
+On work machines with `opWorkAccount` set, `chezmoi apply` reads three **Employee** vault items (API Credential type):
+
+| Item | Fields used |
+| --- | --- |
+| **Gemfury** | `credential` (token); custom text `org` (org slug) |
+| **Cloudflare** | `credential` |
+| **Google Stitch** | `credential` |
+
+That renders `~/.config/zsh/conf.d/work-secrets.zsh` (mode 0600) with `FURY_AUTH`, `UV_INDEX_GEMFURY_USERNAME`, `UV_INDEX_GEMFURY_PASSWORD` (`NOPASS`), `PIP_EXTRA_INDEX_URL`, `CLOUDFLARE_API_TOKEN`, and `GOOGLE_STITCH_API_KEY`. Chezmoi runs `op` during apply. With the 1Password desktop app and CLI integration enabled, approve the app prompt (Touch ID on macOS, system authentication on Linux). On headless Linux (no app), run `op account add` once; chezmoi then runs `op signin`, which asks for the account password in the terminal.
 
 Not managed by chezmoi — create on the machine:
 
