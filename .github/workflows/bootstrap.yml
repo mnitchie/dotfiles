@@ -62,6 +62,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # The ubuntu runner image leaves /usr/share/zsh group-writable, so
+          # compaudit rejects it and compinit aborts. Stock Ubuntu is 755.
+          if [[ "$(uname -s)" == Linux ]]; then
+            sudo chmod -R go-w /usr/share/zsh
+          fi
           stderr="$(mktemp)"
           trap 'rm -f "$stderr"' EXIT
           zsh -l -i -c 'exit' 2>"$stderr"
