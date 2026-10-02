@@ -1,5 +1,5 @@
 {{- if .work -}}
 [user]
-	email = {{ .workEmail }}
+	email = {{ .workEmail | quote }}
 	signingkey = {{ .workSigningKey | quote }}
 {{ end -}}

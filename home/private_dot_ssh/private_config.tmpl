@@ -1,11 +1,11 @@
 {{- $agent := "" -}}
 {{- if eq .platform "darwin" -}}
-{{-   $agent = "\"~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock\"" -}}
+{{-   $agent = "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock" -}}
 {{- else if and (eq .platform "linux") (not .headless) -}}
 {{-   $agent = "~/.1password/agent.sock" -}}
 {{- end -}}
 Include ~/.ssh/config.local
 {{ if $agent }}
 Host *
-  IdentityAgent {{ $agent }}
+  IdentityAgent {{ $agent | quote }}
 {{ end -}}

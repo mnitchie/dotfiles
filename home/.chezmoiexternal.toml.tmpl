@@ -8,8 +8,8 @@ checksum.sha256 = "cf510d30c78453cce0b833d8c04db09a1ae8b6d8770f1163b58b0554e9d3e
 {{ if and (eq .platform "linux") (not .headless) -}}
 [".local/share/fonts/JetBrainsMonoNerdFont"]
 type = "archive"
-url = "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.5.1/JetBrainsMono.tar.xz"
+url = {{ .jetbrainsMonoNerdFont.url | quote }}
 exact = true
 include = ["*.ttf", "LICENSE*", "LICENSE", "OFL.txt"]
-checksum.sha256 = "04d5e8f903693f9dd13e16f867e994834e681eb3c72c0d337a770dcda09010cf"
+checksum.sha256 = {{ .jetbrainsMonoNerdFont.sha256 | quote }}
 {{- end -}}
