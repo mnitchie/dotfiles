@@ -2,6 +2,10 @@ if (( $+commands[bat] )); then
   alias cat='bat --paging=never'
 fi
 
+if (( $+commands[fd] )); then
+  alias find='fd'
+fi
+
 if (( $+commands[eza] )); then
   alias ls='eza'
 fi

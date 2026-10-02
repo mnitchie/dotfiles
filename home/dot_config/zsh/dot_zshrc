@@ -43,6 +43,10 @@ if [[ -o zle && -t 0 ]] && command -v fzf >/dev/null; then
   source <(fzf --zsh)
 fi
 
+if command -v zoxide >/dev/null; then
+  eval "$(zoxide init zsh --cmd cd)"
+fi
+
 if command -v fnm >/dev/null; then
   eval "$(fnm env --use-on-cd --shell zsh)"
 fi
@@ -60,3 +64,13 @@ unset _conf
 if [[ -r ${ZDOTDIR}/local.zsh ]]; then
   source "${ZDOTDIR}/local.zsh"
 fi
+
+# Must be sourced last so it sees the final line editor state.
+_syntax_highlighting="${HOMEBREW_PREFIX:-}/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+if [[ ! -r ${_syntax_highlighting} && -z ${HOMEBREW_PREFIX:-} ]] && command -v brew >/dev/null; then
+  _syntax_highlighting="$(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+fi
+if [[ -r ${_syntax_highlighting} ]]; then
+  source "${_syntax_highlighting}"
+fi
+unset _syntax_highlighting
