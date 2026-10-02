@@ -5,6 +5,8 @@ brews:
   - awscli
   - bat
   - cloc
+  - duf
+  - dust
   - eza
   - fd
   - fnm
@@ -19,7 +21,9 @@ brews:
   - tree
   - uv
   - vim
+  - zoxide
   - zsh-autosuggestions
+  - zsh-syntax-highlighting
 
 # darwin only. There is no 1password-cli formula. The cask's Linux build only
 # links the op binary, so Linux uses 1Password's apt repository (WSL uses op.exe on Windows).

@@ -41,8 +41,15 @@
 	diffFilter = "delta --color-only"
 [delta]
 	navigate = true
+	line-numbers = true
+	syntax-theme = Dracula
+	file-style = bold yellow ul
+	file-decoration-style = none
+	hunk-header-style = omit
 [merge]
 	conflictStyle = zdiff3
+[diff]
+	colorMoved = default
 {{ if .work -}}
 [includeIf "gitdir:~/git/strata/"]
 	path = work
