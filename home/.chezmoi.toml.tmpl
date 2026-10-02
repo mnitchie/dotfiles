@@ -35,10 +35,6 @@
 {{- if eq $platform "wsl" -}}
 {{-   $windowsUser = promptStringOnce . "windowsUser" "Windows user folder name" -}}
 {{- end -}}
-{{- $name := "Mike Nitchie" -}}
-{{- $email := "mikenitchie@gmail.com" -}}
-{{- $signingKey := "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHZItfI9xDfprMpb1fsAgp+6PDaxbds/CNSKgKiZ+5dl" -}}
-{{- $workSigningKey := "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKgUUi7EjbMsWX5WTSZ3r3oDhoP0rHIuKYKoox7sZTHt" -}}
 [data]
 platform = {{ $platform | quote }}
 brewPrefix = {{ $brewPrefix | quote }}
@@ -47,18 +43,10 @@ work = {{ $work }}
 workEmail = {{ $workEmail | quote }}
 opWorkAccount = {{ $opWorkAccount | quote }}
 windowsUser = {{ $windowsUser | quote }}
-name = {{ $name | quote }}
-email = {{ $email | quote }}
-signingKey = {{ $signingKey | quote }}
-workSigningKey = {{ $workSigningKey | quote }}
 {{- if eq $platform "darwin" }}
 
 [onepassword]
-{{- if and (not (stat "/opt/homebrew/bin/op")) (stat "/usr/local/bin/op") }}
-command = "/usr/local/bin/op"
-{{- else }}
 command = "/opt/homebrew/bin/op"
-{{- end }}
 {{- else if eq $platform "wsl" }}
 
 [onepassword]

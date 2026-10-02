@@ -8,7 +8,7 @@
 {{- end -}}
 [user]
 	name = {{ .name | quote }}
-	email = {{ .email }}
+	email = {{ .email | quote }}
 	signingkey = {{ .signingKey | quote }}
 [credential "https://github.com"]
 	# An empty value resets credential helpers inherited from the system config.

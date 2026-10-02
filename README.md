@@ -4,13 +4,13 @@ Personal machine setup managed with [chezmoi](https://www.chezmoi.io/). A single
 
 ## New machine
 
-**Before the one-liner:** for work secrets at apply time, set up 1Password first — or leave the work account prompt blank and secrets are skipped.
+**Before the one-liner:** for work secrets, set up 1Password first — or leave the work account prompt blank and secrets are skipped. Chezmoi renders templates before `run_before_` install scripts, and `onepasswordRead` runs only when `op` is already available. If the CLI is missing, that apply installs it and skips work secrets. Run `chezmoi apply` again once `op` can sign in.
 
-| Platform | 1Password before apply |
+| Platform | 1Password before the apply that reads secrets |
 | --- | --- |
-| macOS, Linux desktop | Desktop app installed and signed in; **Integrate with 1Password CLI** and the SSH agent enabled in the app |
-| Headless Linux | If you will enter a work account at init, install the [1Password CLI](https://developer.1password.com/docs/cli/get-started/) yourself and run `op account add` before apply. Chezmoi's apt install of the CLI happens in that same apply, before `op signin`, so it is too late to add the account then. Otherwise leave the prompt blank |
-| WSL | [1Password CLI on Windows](https://developer.1password.com/docs/cli/get-started/) (e.g. `winget install AgileBits.1Password.CLI`); enable CLI integration in the Windows 1Password app (chezmoi uses `op.exe`, not Linux `op`) |
+| macOS, Linux desktop | Desktop app installed and signed in; **Integrate with 1Password CLI** and the SSH agent enabled in the app. Homebrew (macOS) or apt (Linux) installs the CLI |
+| Headless Linux | If you will enter a work account at init, run [`op account add`](https://developer.1password.com/docs/cli/get-started/) before the apply that reads secrets. The first apply installs the CLI when it is missing; add the account after that, then apply again. Otherwise leave the prompt blank |
+| WSL | [1Password CLI on Windows](https://developer.1password.com/docs/cli/get-started/) (e.g. `winget install AgileBits.1Password.CLI`); enable CLI integration in the Windows 1Password app (chezmoi uses `op.exe`, not Linux `op`, and does not install it) |
 
 ```bash
 sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin" -- --use-builtin-git=true init --apply mnitchie
@@ -110,7 +110,7 @@ See the chezmoi [daily operations](https://www.chezmoi.io/user-guide/daily-opera
 | `chezmoi re-add` | Copy non-template files you changed under `$HOME` back into the source |
 | `chezmoi cd` | Shell in the source directory |
 
-`chezmoi re-add` does **not** update templates (including `~/.zshenv`, `~/.config/zsh/.zshrc`, `~/.config/git/config`, `~/.ssh/config`, and `work.zsh`). Use `chezmoi edit` for those.
+`chezmoi re-add` updates plain files, including `~/.config/zsh/.zshrc`. Templates stay on `chezmoi edit` (`~/.zshenv`, `~/.config/git/config`, `~/.ssh/config`, `work.zsh`, and the other `*.tmpl` sources).
 
 Aliases (when `chezmoi` / `zsh` are on `PATH`): **`editz`** → `chezmoi edit --apply ~/.config/zsh/.zshrc`; **`reloadz`** → `exec zsh`.
 
@@ -131,7 +131,9 @@ Run `chezmoi apply` so the package script re-runs.
 
 Add a template under `home/` whose **entire body** is inside `{{- if ... -}}` … `{{- end -}}` (no stray newlines outside the trim markers). Example: `conf.d/20-darwin.zsh.tmpl` uses `{{- if eq .platform "darwin" -}}`.
 
-Template **data keys** (from `home/.chezmoi.toml.tmpl`; other templates use these, not `.chezmoi.os` / `.chezmoi.arch`):
+Template **data keys** (other templates use these, not `.chezmoi.os` / `.chezmoi.arch`).
+
+From `home/.chezmoi.toml.tmpl`, written to `~/.config/chezmoi/chezmoi.toml` at `chezmoi init`:
 
 | Key | Meaning |
 | --- | --- |
@@ -142,17 +144,25 @@ Template **data keys** (from `home/.chezmoi.toml.tmpl`; other templates use thes
 | `workEmail` | Git email for work repos |
 | `opWorkAccount` | Work 1Password account sign-in address (if work; blank skips work secrets) |
 | `windowsUser` | `C:\Users\<name>` folder name (WSL) |
-| `name`, `email` | Personal git identity |
-| `signingKey`, `workSigningKey` | SSH signing public keys |
 
-Use `home/.chezmoiignore` only for whole directories.
+From `home/.chezmoidata/`, updated on `chezmoi apply` and `chezmoi update`:
+
+| Key | File | Meaning |
+| --- | --- | --- |
+| `name`, `email` | `identity.yaml` | Personal git identity |
+| `signingKey`, `workSigningKey` | `identity.yaml` | SSH signing public keys |
+| `jetbrainsMonoNerdFont` | `fonts.yaml` | Linux desktop Nerd Font URL and checksum |
+
+A config file created before this split can still contain `name`, `email`, `signingKey`, and `workSigningKey`. Those config values override `.chezmoidata`. Run `chezmoi update --init` once; `prompt*Once` keeps the answers already stored.
+
+Skip a whole directory on some machines by listing it in `home/.chezmoiignore` (patterns are templates even without `.tmpl`). Keep a single file's platform differences inside an `{{- if -}}` body so an empty render removes the file.
 
 ## Work config
 
 When **Work machine** is true, apply produces:
 
 - `~/.config/zsh/conf.d/work.zsh` (from `home/dot_config/zsh/conf.d/work.zsh.tmpl`)
-- `~/.config/zsh/conf.d/work-secrets.zsh` (from `private_work-secrets.zsh.tmpl`, when `opWorkAccount` is set)
+- `~/.config/zsh/conf.d/work-secrets.zsh` (from `private_work-secrets.zsh.tmpl`, when `opWorkAccount` is set and `op` is already installed)
 - `~/.config/git/work`
 - `[includeIf "gitdir:~/git/strata/"]` → `work` in git config
 
@@ -164,7 +174,7 @@ Nothing secret is committed. Templates may use `onepasswordRead` for 1Password v
 
 ### Work secrets
 
-On work machines with `opWorkAccount` set, `chezmoi apply` reads three items from the **Private** vault in your **work** 1Password account (the sign-in address you set as `opWorkAccount` at init — not the Private vault on a personal account). `op read` resolves vault name, item title, then field label, so item type does not matter (a Login item with added custom fields works). Each item needs these field labels. Labels must be unique within the item, and item titles must be unique in the vault.
+On work machines with `opWorkAccount` set and `op` already installed, `chezmoi apply` reads three items from the **Private** vault in your **work** 1Password account (the sign-in address you set as `opWorkAccount` at init — not the Private vault on a personal account). `op read` resolves vault name, item title, then field label, so item type does not matter (a Login item with added custom fields works). Each item needs these field labels. Labels must be unique within the item, and item titles must be unique in the vault.
 
 | Item | Field labels |
 | --- | --- |
@@ -172,7 +182,7 @@ On work machines with `opWorkAccount` set, `chezmoi apply` reads three items fro
 | **Cloudflare** | `credential` |
 | **Google Stitch** | `credential` |
 
-That renders `~/.config/zsh/conf.d/work-secrets.zsh` (mode 0600) with `FURY_AUTH`, `UV_INDEX_GEMFURY_USERNAME`, `UV_INDEX_GEMFURY_PASSWORD` (`NOPASS`), `PIP_EXTRA_INDEX_URL`, `CLOUDFLARE_API_TOKEN`, and `GOOGLE_STITCH_API_KEY`. Chezmoi runs `op` (or `op.exe` on WSL) during apply. With the desktop app and CLI integration enabled, approve the app prompt (Touch ID on macOS, Windows or Linux app authentication). On headless Linux (no app), install the 1Password CLI and run `op account add` before apply; chezmoi then runs `op signin`, which asks for the account password in the terminal.
+That renders `~/.config/zsh/conf.d/work-secrets.zsh` (mode 0600) with `FURY_AUTH`, `UV_INDEX_GEMFURY_USERNAME`, `UV_INDEX_GEMFURY_PASSWORD` (`NOPASS`), `PIP_EXTRA_INDEX_URL`, `CLOUDFLARE_API_TOKEN`, and `GOOGLE_STITCH_API_KEY`. Chezmoi runs `op` (or `op.exe` on WSL) while rendering the template. With the desktop app and CLI integration enabled, approve the app prompt (Touch ID on macOS, Windows or Linux app authentication). On headless Linux (no app), run `op account add` before that render; chezmoi then runs `op signin`, which asks for the account password in the terminal. When `op` is not installed yet, the secrets file is left absent and the package script installs the CLI; apply again after `op` can sign in.
 
 Not managed by chezmoi — create on the machine:
 
@@ -191,7 +201,7 @@ Starship needs a [Nerd Font](https://www.nerdfonts.com/). Use **JetBrainsMono Ne
 | Platform | Install | Set in terminal |
 | --- | --- | --- |
 | macOS | Cask `font-jetbrains-mono-nerd-font` | Terminal.app, iTerm2, etc. |
-| Linux desktop | `~/.local/share/fonts/JetBrainsMonoNerdFont` via `.chezmoiexternal.toml.tmpl` | Desktop terminal |
+| Linux desktop | `~/.local/share/fonts/JetBrainsMonoNerdFont` via `.chezmoiexternal.toml.tmpl` (pin in `.chezmoidata/fonts.yaml`) | Desktop terminal |
 | WSL | Windows: `winget install --id DEVCOM.JetBrainsMonoNerdFont` or [nerdfonts.com](https://www.nerdfonts.com/) | Windows Terminal → Font |
 | Linux server | — | Font on the SSH client machine |
 
@@ -200,7 +210,7 @@ Starship needs a [Nerd Font](https://www.nerdfonts.com/). Use **JetBrainsMono Ne
 `home/.chezmoiexternal.toml.tmpl` fetches at apply time:
 
 - `~/.agents/skills/gh-stack/`
-- Linux desktop Nerd Font (see above)
+- Linux desktop Nerd Font, pinned in `home/.chezmoidata/fonts.yaml`
 
 ## CI
 
