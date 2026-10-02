@@ -4,7 +4,9 @@ brews:
   - aws-vault
   - awscli
   - bat
+  - cloc
   - eza
+  - fd
   - fnm
   - fzf
   - gh
