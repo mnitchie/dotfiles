@@ -15,12 +15,14 @@ brews:
   - git
   - git-delta
   - jq
+  - nmap
   - pre-commit
   - ripgrep
   - starship
   - tree
   - uv
   - vim
+  - wget
   - zoxide
   - zsh-autosuggestions
   - zsh-syntax-highlighting

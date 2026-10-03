@@ -1,7 +1,10 @@
+# Set PATH precedence only for login shells, preserving active environments
+# in non-login shells (including scripts and reloadz).
 {{ if eq .platform "darwin" -}}
 # /etc/zprofile runs path_helper, which rebuilds PATH from /etc/paths and
 # /etc/paths.d and leaves Homebrew behind the system directories. It also
 # sets MANPATH with no leading colon, so man ignores its default path.
+{{ end -}}
 if [[ -d "{{ .brewPrefix }}" ]]; then
   typeset -U path
   path=("{{ .brewPrefix }}/bin" "{{ .brewPrefix }}/sbin" $path)
@@ -12,4 +15,3 @@ if [[ -d "{{ .brewPrefix }}" ]]; then
 fi
 typeset -U path
 path=("${HOME}/.local/bin" $path)
-{{ end -}}

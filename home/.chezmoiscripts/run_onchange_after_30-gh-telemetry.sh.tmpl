@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-# gh config set telemetry disabled
-gh="{{ .brewPrefix }}/bin/gh"
-if [[ -x "${gh}" ]]; then
-  "${gh}" config set telemetry disabled
-fi

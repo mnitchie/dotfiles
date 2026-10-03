@@ -111,11 +111,11 @@ On work machines with `opWorkAccount` set and `op` already installed, `chezmoi a
 
 | Item | Field labels |
 | --- | --- |
-| **Gemfury** | `credential`, `org` |
+| **Gemfury** | `credential` |
 | **Cloudflare** | `credential` |
 | **Google Stitch** | `credential` |
 
-That renders `~/.config/zsh/conf.d/work-secrets.zsh` (mode 0600) with `FURY_AUTH`, `UV_INDEX_GEMFURY_USERNAME`, `UV_INDEX_GEMFURY_PASSWORD` (`NOPASS`), `PIP_EXTRA_INDEX_URL`, `CLOUDFLARE_API_TOKEN`, and `GOOGLE_STITCH_API_KEY`. Chezmoi runs `op` (or `op.exe` on WSL) while rendering the template. With the desktop app and CLI integration enabled, approve the app prompt (Touch ID on macOS, Windows or Linux app authentication). On headless Linux (no app), run `op account add` before that render; chezmoi then runs `op signin`, which asks for the account password in the terminal. When `op` is not installed yet, the secrets file is left absent and the package script installs the CLI; apply again after `op` can sign in.
+That renders `~/.config/zsh/conf.d/work-secrets.zsh` (mode 0600) with `FURY_AUTH`, `UV_INDEX_GEMFURY_USERNAME`, `UV_INDEX_GEMFURY_PASSWORD` (`NOPASS`), `CLOUDFLARE_API_TOKEN`, and `GOOGLE_STITCH_API_KEY`. Chezmoi runs `op` (or `op.exe` on WSL) while rendering the template. With the desktop app and CLI integration enabled, approve the app prompt (Touch ID on macOS, Windows or Linux app authentication). On headless Linux (no app), run `op account add` before that render; chezmoi then runs `op signin`, which asks for the account password in the terminal. When `op` is not installed yet, the secrets file is left absent and the package script installs the CLI; apply again after `op` can sign in.
 
 Not managed by chezmoi — create on the machine:
 

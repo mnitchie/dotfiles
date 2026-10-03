@@ -1,0 +1,2 @@
+# Shared by terminal and GUI apps through npm's default user config path.
+cache=~/.cache/npm

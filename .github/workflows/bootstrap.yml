@@ -51,6 +51,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          status="$(chezmoi status)"
+          if [[ -n "$status" ]]; then
+            printf 'First apply left pending changes:\n%s\n' "$status" >&2
+            exit 1
+          fi
           chezmoi apply
           status="$(chezmoi status)"
           if [[ -n "$status" ]]; then
@@ -76,6 +81,14 @@ jobs:
             exit 1
           fi
           zsh -l -i -c 'command -v starship fnm uv delta fzf'
+          # A nested non-login shell must keep an active environment first.
+          zsh -l <<'ZSH'
+          set -e
+          export PATH="$HOME/.dotfiles-test-venv/bin:$PATH"
+          zsh -c '[[ $path[1] == "$HOME/.dotfiles-test-venv/bin" ]]'
+          # Other parent shells may pass PATH without ZDOTDIR.
+          env -u ZDOTDIR zsh -c '[[ $path[1] == "$HOME/.dotfiles-test-venv/bin" ]]'
+          ZSH
           # `git config --global` reads only ~/.gitconfig when that file exists
           # (macOS runner images ship one) and ignores ~/.config/git/config.
           # Commands merge both files. Run outside a repo so local config

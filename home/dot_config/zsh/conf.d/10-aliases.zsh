@@ -2,12 +2,8 @@ if (( $+commands[bat] )); then
   alias cat='bat --paging=never'
 fi
 
-if (( $+commands[fd] )); then
-  alias find='fd'
-fi
-
 if (( $+commands[eza] )); then
-  alias ls='eza'
+  alias ls='eza --icons=always'
 fi
 
 if (( $+commands[tree] )); then
@@ -25,12 +21,6 @@ fi
 
 if (( $+commands[uv] )); then
   alias manage='uv run python manage.py'
-fi
-
-if (( $+commands[docker] )); then
-  alias pythond='docker run -it --rm --name python_sandbox python_sandbox bash'
-  alias python-sandbox-vanilla='docker run -it --rm -v "$(pwd)":/usr/src/app python_sandbox_vanilla bash'
-  alias python-sandbox-jupyter='docker run -it --rm -v "$(pwd)":/usr/src/app -p 8888:8888 python_sandbox_jupyter'
 fi
 
 if (( $+commands[git] )); then
