@@ -1,0 +1,7 @@
+{{- if eq .platform "darwin" -}}
+if status is-interactive
+    if command -q powermetrics; and command -q grep
+        alias temp 'sudo powermetrics --samplers smc | grep -E -i "temp|fan"'
+    end
+end
+{{ end -}}
