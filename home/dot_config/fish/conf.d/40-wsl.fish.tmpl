@@ -1,0 +1,7 @@
+{{- if eq .platform "wsl" -}}
+# 1Password authenticates WSL SSH through Windows OpenSSH, not a Linux socket.
+if status is-interactive
+    alias ssh 'ssh.exe'
+    alias ssh-add 'ssh-add.exe'
+end
+{{ end -}}

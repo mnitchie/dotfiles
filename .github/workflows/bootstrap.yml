@@ -80,7 +80,7 @@ jobs:
             zsh -l -c 'autoload -Uz compaudit; compaudit' || true
             exit 1
           fi
-          zsh -l -i -c 'command -v starship fnm uv delta fzf'
+          zsh -l -i -c 'command -v starship fnm uv delta fzf fish'
           # A nested non-login shell must keep an active environment first.
           zsh -l <<'ZSH'
           set -e
@@ -88,7 +88,16 @@ jobs:
           zsh -c '[[ $path[1] == "$HOME/.dotfiles-test-venv/bin" ]]'
           # Other parent shells may pass PATH without ZDOTDIR.
           env -u ZDOTDIR zsh -c '[[ $path[1] == "$HOME/.dotfiles-test-venv/bin" ]]'
+          # fish is started from zsh and keeps the inherited PATH order.
+          fish -c 'test "$PATH[1]" = "$HOME/.dotfiles-test-venv/bin"; or exit 1'
           ZSH
+          # Interactive fish, same way it is invoked from the login shell.
+          zsh -l -c 'fish -i -c "exit"' 2>"$stderr"
+          if [[ -s "$stderr" ]]; then
+            cat "$stderr" >&2
+            exit 1
+          fi
+          zsh -l -c 'fish -i -c "functions -q gitacp; or exit 1"'
           # `git config --global` reads only ~/.gitconfig when that file exists
           # (macOS runner images ship one) and ignores ~/.config/git/config.
           # Commands merge both files. Run outside a repo so local config

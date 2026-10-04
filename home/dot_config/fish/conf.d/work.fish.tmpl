@@ -1,0 +1,8 @@
+{{- if .work -}}
+# Job-specific config. When the job ends, clear this template.
+# Fish sources every *.fish file in this directory. Archive old config
+# outside conf.d, or delete it, so it does not keep running.
+if status is-interactive
+    alias cdsrda 'cd ~/git/strata/strata-request-data-api'
+end
+{{ end -}}
