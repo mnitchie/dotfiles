@@ -68,6 +68,72 @@ Edit `home/.chezmoidata/packages.yaml` in the source (via `chezmoi edit` or afte
 
 Run `chezmoi apply` so the package script re-runs.
 
+## CLI tools
+
+A few of the `brews` in `home/.chezmoidata/packages.yaml` replace everyday commands. Interactive zsh and fish alias `cat` to `bat --paging=never` and `ls` to `eza --icons=always`, and wire zoxide in as `cd`. fzf loads when stdin is a terminal. In zsh, `df`, `du`, and `grep` print a nudge toward `duf`, `dust`, and `rg`.
+
+### bat
+
+| Command | Purpose |
+| --- | --- |
+| `bat README.md` | Syntax highlighting and line numbers |
+| `bat -r 40:80 file.py` | Print only lines 40–80 |
+| `bat --diff file.py` | Lines that differ from the Git index |
+
+### duf
+
+| Command | Purpose |
+| --- | --- |
+| `duf` | Free space on mounted filesystems |
+| `duf -only local` | Local disks only |
+| `duf /` | The filesystem that holds `/` |
+
+### dust
+
+| Command | Purpose |
+| --- | --- |
+| `dust` | Disk used in the current directory, largest first |
+| `dust -d 1 ~` | One level under home |
+| `dust -n 20` | The 20 largest entries |
+
+### eza
+
+| Command | Purpose |
+| --- | --- |
+| `ls -la` | Long listing (`ls` is already eza) |
+| `eza -lh --git` | Human sizes and git status |
+| `eza --tree -L 2` | Two-level tree |
+
+### fzf
+
+| Command | Purpose |
+| --- | --- |
+| `Ctrl-R` | Fuzzy-search history and paste the line |
+| `Ctrl-T` | Fuzzy-find files and paste their paths |
+| `Alt-C` | Fuzzy-find a directory and `cd` into it |
+
+On macOS, Option has to send Esc for `Alt-C` (iTerm2: Profiles → Keys → Left Option key → Esc+).
+
+### ripgrep
+
+The binary is `rg`. Searches skip hidden files, binaries, and anything in `.gitignore`.
+
+| Command | Purpose |
+| --- | --- |
+| `rg TODO` | Search the current tree |
+| `rg -t py 'def '` | Python files only |
+| `rg -n -C 2 error src/` | Line numbers and two lines of context |
+
+### zoxide
+
+`cd` with a query jumps to the highest-ranked directory you have already visited. A path that exists is used as-is.
+
+| Command | Purpose |
+| --- | --- |
+| `cd proj` | Best match for `proj` |
+| `cd api rust` | Match on several words |
+| `cdi` | Pick from the ranked list with fzf |
+
 ## Add a file on one platform only
 
 Add a template under `home/` whose **entire body** is inside `{{- if ... -}}` … `{{- end -}}` (no stray newlines outside the trim markers). Example: `conf.d/20-darwin.zsh.tmpl` uses `{{- if eq .platform "darwin" -}}`.
