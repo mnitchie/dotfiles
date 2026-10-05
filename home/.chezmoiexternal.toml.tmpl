@@ -6,14 +6,32 @@ exact = true
 stripComponents = 3
 include = ["*/skills/gh-stack/**"]
 checksum.sha256 = "cf510d30c78453cce0b833d8c04db09a1ae8b6d8770f1163b58b0554e9d3e0fd"
-[".agents/skills/daisyui"]
+[".agents/skills/ponytail"]
 type = "archive"
 refreshPeriod = "168h"
-url = "https://github.com/saadeghi/daisyui/archive/9adbeaa259816be46b98bf497a09cd2ab127e3cf.tar.gz"
+url = "https://github.com/DietrichGebert/ponytail/archive/974d940a1c5344210874150b98ff0d2c861fab6a.tar.gz"
 exact = true
 stripComponents = 3
-include = ["*/skills/daisyui/**"]
-checksum.sha256 = "89414720ecdb77890c416456393c47bfcce03bc2cbf2d71f164f7e2b154a8c42"
+include = ["*/skills/ponytail/**"]
+checksum.sha256 = "d2677c25dc3963e99791e332bce4b0f5ae1558894f8fd989750206a43a18651a"
+
+[".agents/skills/i-have-adhd"]
+type = "archive"
+refreshPeriod = "168h"
+url = "https://github.com/ayghri/i-have-adhd/archive/3880291c4aa8cab50d234002b8ea2c48305efe98.tar.gz"
+exact = true
+stripComponents = 3
+include = ["*/skills/i-have-adhd/**"]
+checksum.sha256 = "f6fc58edfd6aa36e0df21fc32a6f32471f1766450b38908980b03e3ed012489a"
+
+[".agents/skills/pr-lens"]
+type = "archive"
+refreshPeriod = "168h"
+url = "https://github.com/coldteadotai/pr-lens/archive/508c2e581ff3ee4887e084929691fd7c792f96a5.tar.gz"
+exact = true
+stripComponents = 3
+include = ["*/packages/agent-skill/SKILL.md", "*/packages/agent-skill/LICENSE", "*/packages/agent-skill/references/**"]
+checksum.sha256 = "2406c5d9007e872f96b5103b82d239d0cf3a9248a225904f0c32dfff7890ed9f"
 
 {{ if and (eq .platform "linux") (not .headless) -}}
 [".local/share/fonts/JetBrainsMonoNerdFont"]

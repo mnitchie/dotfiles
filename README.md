@@ -246,7 +246,8 @@ Starship needs a [Nerd Font](https://www.nerdfonts.com/). Use **JetBrainsMono Ne
 
 `home/.chezmoiexternal.toml.tmpl` fetches at apply time:
 
-- Third-party skills in `~/.agents/skills/`: `gh-stack` and `daisyui`
+- Third-party skills in `~/.agents/skills/`: `gh-stack`,
+  `ponytail`, `pr-lens`, and `i-have-adhd`
 - Linux desktop Nerd Font, pinned in `home/.chezmoidata/fonts.yaml`
 
 ## Cursor CLI
@@ -264,8 +265,9 @@ CLI caches remain local and are preserved by the merge.
 built-ins and plugin caches remain owned by their clients.
 
 Third-party skills are declared in `home/.chezmoiexternal.toml.tmpl`, with a
-one-week (`168h`) download refresh period. Local skills such as `simplify` are
-tracked under `home/dot_agents/skills/`; edit those sources, then apply.
+one-week (`168h`) download refresh period. `simplify` is tracked under
+`home/dot_agents/skills/`; edit that source, then apply. Install Stitch plugins
+through Cursor's marketplace; chezmoi does not manage their skills or caches.
 
 `chezmoi update` pulls this dotfiles repository and applies it. Changing an
 external URL downloads the new source. Externals using a moving branch URL
