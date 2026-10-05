@@ -89,6 +89,14 @@ jobs:
           fish -c 'test "$PATH[1]" = "$HOME/.dotfiles-test-venv/bin"; or exit 1'
           FISH
           "$fish_bin" -l -i -c 'functions -q gitacp; or exit 1'
+          # Wrapper warnings must not add color escapes to command output.
+          TERM=xterm-256color "$fish_bin" -l -i -c 'test -z "$(_nudge test 2>/dev/null)"; or exit 1
+            test "$(printf "needle\n" | grep needle 2>/dev/null)" = needle; or exit 1'
+          "$fish_bin" -l -i -c 'set -g fish_history dotfiles_smoke
+            builtin history append "dotfiles history test"
+            history | string match -qr "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}  dotfiles history test\$"; or exit 1
+            history delete --exact --case-sensitive "dotfiles history test"; or exit 1
+            test -z "$(builtin history search --exact "dotfiles history test")"; or exit 1'
           "$fish_bin" -l -c 'test "$EDITOR" = vim; and test -n "$HOMEBREW_PREFIX"'
           # `git config --global` reads only ~/.gitconfig when that file exists
           # (macOS runner images ship one) and ignores ~/.config/git/config.

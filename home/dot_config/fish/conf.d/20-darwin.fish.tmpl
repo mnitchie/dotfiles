@@ -1,7 +1,8 @@
 {{- if eq .platform "darwin" -}}
 if status is-interactive
-    if command -q powermetrics; and command -q grep
-        alias temp 'sudo powermetrics --samplers smc | grep -E -i "temp|fan"'
+    # Apple Silicon does not expose the SMC temperature sampler.
+    if command -q powermetrics; and powermetrics --help 2>&1 | string match -rq '^\s+smc\s'
+        alias temp 'sudo powermetrics --samplers smc | command grep -E -i "temp|fan"'
     end
 end
 {{ end -}}

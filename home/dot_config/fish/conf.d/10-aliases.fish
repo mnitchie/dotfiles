@@ -1,6 +1,3 @@
-# Fish sources conf.d for every process, including `fish -c`. Keep these
-# interactive-only so a non-interactive fish stays a plain command runner.
-
 if status is-interactive
     if command -q bat
         alias cat 'bat --paging=never'
@@ -19,6 +16,15 @@ if status is-interactive
     end
 
     alias reloadf 'exec fish'
+
+    functions --copy history _fish_history
+    function history --wraps history
+        if not set -q argv[1]
+            _fish_history --show-time='%F %T  '
+        else
+            _fish_history $argv
+        end
+    end
 
     if command -q uv
         alias manage 'uv run python manage.py'

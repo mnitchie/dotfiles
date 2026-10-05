@@ -1,8 +1,10 @@
 if status is-interactive
     function _nudge
-        set_color FFD700
-        echo $argv >&2
-        set_color normal
+        begin
+            set_color FFD700
+            printf '%s\n' $argv
+            set_color normal
+        end >&2
     end
 
     if command -q fd

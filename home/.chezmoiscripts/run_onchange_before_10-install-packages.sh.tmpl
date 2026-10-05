@@ -7,7 +7,7 @@ if [[ ! -x "${brew}" ]]; then
   exit 1
 fi
 # Assignment, not eval "$(...)", so a shellenv failure is not swallowed.
-shellenv="$("${brew}" shellenv)"
+shellenv="$("${brew}" shellenv bash)"
 eval "${shellenv}"
 "${brew}" bundle --file=- --no-upgrade <<'EOF'
 {{ range .brews -}}

@@ -1,10 +1,5 @@
-# Login fish sets PATH in conf.d/00-env.fish. Do not reorder PATH here; a
-# non-login fish keeps the inherited order, including a virtualenv at the front.
-
 if status is-interactive
-    # The default greeting prints before the prompt.
-    function fish_greeting
-    end
+    set -g fish_greeting
 
     if command -q uv
         uv generate-shell-completion fish | source
@@ -12,10 +7,13 @@ if status is-interactive
 
     if command -q op
         op completion fish | source
+    else if command -q op.exe
+        op.exe completion fish | source
     end
 
     # Key bindings need a terminal.
     if command -q fzf; and isatty stdin
+        set -g FZF_CTRL_R_OPTS '--with-nth=1,3..'
         fzf --fish | source
     end
 
@@ -31,7 +29,7 @@ if status is-interactive
         starship init fish | source
     end
 
-    # Not managed by chezmoi. Sourced last so it can override the above.
+    # Unmanaged local overrides.
     if test -r "$__fish_config_dir/local.fish"
         source "$__fish_config_dir/local.fish"
     end

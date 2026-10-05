@@ -1,6 +1,6 @@
 "$schema" = 'https://starship.rs/config-schema.json'
 
-right_format = """$aws"""
+right_format = '$aws'
 
 [aws]
 format = '[$symbol $profile \($region\) (\[$duration\])]($style) '
@@ -19,7 +19,6 @@ format = '([\[$all_status$ahead_behind\]]($style)) '
 [nodejs]
 disabled = true
 
-# Disable the package module, hiding it from the prompt completely
 [package]
 disabled = true
 
@@ -28,10 +27,7 @@ disabled = true
 format = '\[[$symbol$version]($style)\] '
 python_binary = [".venv/bin/python", "python", "python3"]
 
-[shell]
-disabled = true
-
-# Hidden at the top-level shell. Once nested, the symbol repeats once per level.
+# Show the shell level in nested shells.
 [shlvl]
 disabled = false
 threshold = 2

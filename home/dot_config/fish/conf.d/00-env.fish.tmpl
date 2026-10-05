@@ -1,5 +1,4 @@
-# XDG and tool paths for every fish. PATH is rearranged only for a login
-# shell, so a nested fish keeps an active virtualenv at the front.
+# Reorder PATH only in login shells.
 
 set -gx XDG_CONFIG_HOME "$HOME/.config"
 set -gx XDG_DATA_HOME "$HOME/.local/share"
@@ -12,12 +11,13 @@ set -gx IPYTHONDIR "$XDG_CONFIG_HOME/ipython"
 set -gx LESSHISTFILE "$XDG_STATE_HOME/less/history"
 set -gx PSQL_HISTORY "$XDG_STATE_HOME/psql/history"
 set -gx SQLITE_HISTORY "$XDG_STATE_HOME/sqlite/history"
-# macOS matplotlib ignores XDG and uses ~/.matplotlib for config and the font cache.
-# MPLCONFIGDIR moves both. This directory has no matplotlibrc, only the font cache.
+# Keep matplotlib config and its font cache out of ~/.matplotlib.
 set -gx MPLCONFIGDIR "$XDG_CACHE_HOME/matplotlib"
 
 set -gx EDITOR vim
 set -gx PAGER less
+# Ctrl-R shows the date. Alt-T still cycles unix time, then no prefix.
+set -gx FZF_CTRL_R_OPTS "--with-nth 1,3.. --bind 'alt-t:change-with-nth(2..|3..|1,3..)'"
 
 for dir in $XDG_STATE_HOME/python $XDG_STATE_HOME/less $XDG_STATE_HOME/psql $XDG_STATE_HOME/sqlite $XDG_CACHE_HOME/npm
     test -d $dir
@@ -27,8 +27,7 @@ end
 set -l brew_prefix "{{ .brewPrefix }}"
 
 if status is-login
-    # fish does not read /etc/zprofile, so macOS path_helper never runs unless
-    # we call it. It leaves Homebrew behind the system directories.
+    # Fish does not read /etc/zprofile; load macOS system paths here.
     if test -x /usr/libexec/path_helper
         for line in (/usr/libexec/path_helper -s)
             set -l m (string match -r -- '^(PATH|MANPATH)="([^"]*)"' $line)
@@ -38,17 +37,7 @@ if status is-login
         end
     end
 
-    set -l front $HOME/.local/bin
-    if test -d $brew_prefix
-        set -a front $brew_prefix/bin $brew_prefix/sbin
-    end
-    set -l rest
-    for p in $PATH
-        if not contains -- $p $front
-            set -a rest $p
-        end
-    end
-    set -gx PATH $front $rest
+    fish_add_path --path --move "$HOME/.local/bin" $brew_prefix/bin $brew_prefix/sbin
 end
 
 if test -d $brew_prefix
@@ -59,8 +48,7 @@ if test -d $brew_prefix
 {{- else }}
     set -gx HOMEBREW_REPOSITORY $brew_prefix/Homebrew
 {{- end }}
-    # Leading empty element exports as a leading colon, so man keeps its
-    # default path. Same normalization as brew shellenv.
+    # A leading colon preserves the default man search path.
     if set -q MANPATH[1]
         set -gx MANPATH '' (string match -v -- '' $MANPATH)
     end
