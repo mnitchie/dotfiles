@@ -19,6 +19,9 @@ cask {{ . | quote }}
 {{ end -}}
 {{ end -}}
 EOF
+{{ range .uvTools -}}
+"{{ $.brewPrefix }}/bin/uv" tool install{{ range .with }} --with {{ . | quote }}{{ end }} {{ .name | quote }}
+{{ end -}}
 {{ if eq .platform "linux" -}}
 # No 1password-cli formula. The cask can install a Linux binary, but it only
 # links op; 1Password's apt package also creates the onepassword-cli group

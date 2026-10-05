@@ -65,6 +65,7 @@ Edit `home/.chezmoidata/packages.yaml` in the source (via `chezmoi edit` or afte
 - **`casks`** — macOS only (e.g. `font-jetbrains-mono-nerd-font`, `1password-cli`)
 - **`apt`** — Debian/Ubuntu packages before Homebrew on Linux and WSL
 - **`aptLinuxDesktop`** — non-headless Linux only (e.g. `fontconfig`)
+- **`uvTools`** — `uv tool install` after Homebrew. `with` packages install into that tool (`llm` with `llm-ollama`). Homebrew’s `llm` formula is not used
 
 Run `chezmoi apply` so the package script re-runs.
 
@@ -133,6 +134,16 @@ Short examples for a command. Homebrew’s `tldr` formula is disabled, so the pa
 | `tldr tar` | Examples for `tar` |
 | `tldr -p osx tar` | The macOS page (platform name is `osx`) |
 | `tldr -u` | Refresh the page cache |
+
+### llm
+
+Installed with `uv tool install`, not Homebrew. The binary is `~/.local/bin/llm`. The `llm-ollama` plugin is installed into that same environment (`--with`), so `uv tool upgrade llm` keeps it. `llm models` lists Ollama models while the Ollama app is running.
+
+| Command | Purpose |
+| --- | --- |
+| `llm models` | List available models |
+| `llm 'Hello'` | Send a prompt to the default model |
+| `llm keys set openai` | Store an API key |
 
 ### zoxide
 

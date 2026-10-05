@@ -30,6 +30,13 @@ brews:
   - zsh-autosuggestions
   - zsh-syntax-highlighting
 
+# Homebrew's llm formula is unreliable. Install with uv after brew bundle.
+# `with` entries are `uv tool install --with` packages, kept across `uv tool upgrade`.
+uvTools:
+  - name: llm
+    with:
+      - llm-ollama
+
 # darwin only. There is no 1password-cli formula. The cask's Linux build only
 # links the op binary, so Linux uses 1Password's apt repository (WSL uses op.exe on Windows).
 casks:

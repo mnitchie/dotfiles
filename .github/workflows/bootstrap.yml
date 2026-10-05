@@ -80,7 +80,8 @@ jobs:
             zsh -l -c 'autoload -Uz compaudit; compaudit' || true
             exit 1
           fi
-          zsh -l -i -c 'command -v starship fnm uv delta fzf fish tldr'
+          zsh -l -i -c 'command -v starship fnm uv delta fzf fish tldr llm'
+          zsh -l -c 'llm plugins | grep -q llm-ollama'
           # A nested non-login shell must keep an active environment first.
           zsh -l <<'ZSH'
           set -e
