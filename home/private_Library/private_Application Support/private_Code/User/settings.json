@@ -1,0 +1,135 @@
+{
+    "[html]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[javascriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[json]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[python]": {
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+        },
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnType": true
+    },
+    "[yaml]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "breadcrumbs.enabled": true,
+    "debug.inlineValues": "on",
+    "editor.bracketPairColorization.enabled": true,
+    "editor.codeActionsOnSave": {},
+    "editor.formatOnSaveMode": "modificationsIfAvailable",
+    "editor.guides.bracketPairs": false,
+    "editor.inlineSuggest.enabled": true,
+    "editor.minimap.enabled": true,
+    "editor.multiCursorLimit": 100000,
+    "editor.multiCursorModifier": "ctrlCmd",
+    "editor.renderWhitespace": "all",
+    "editor.rulers": [
+        120
+    ],
+    "editor.stickyScroll.enabled": true,
+    "files.autoSave": "onFocusChange",
+    "files.exclude": {
+        ".venv": true,
+        "**/__pycache__": true,
+        "**/.pytest_cache": true
+    },
+    "github.copilot.enable": {
+        "*": true,
+        "markdown": true,
+        "plaintext": true,
+        "scminput": false,
+        "yaml": true
+    },
+    "emmet.includeLanguages": {
+        "django-html": "html"
+    },
+    "gitlens.codeLens.scopes": [
+        "document",
+        "containers",
+        "blocks"
+    ],
+    "gitlens.telemetry.enabled": false,
+    "markdown-pdf.displayHeaderFooter": false,
+    "python.analysis.autoFormatStrings": true,
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.completeFunctionParens": true,
+    "python.analysis.extraPaths": [],
+    "python.analysis.fixAll": [
+        "source.unusedImports"
+    ],
+    "python.analysis.typeCheckingMode": "basic",
+    "python.autoComplete.extraPaths": [],
+    "python.languageServer": "Pylance",
+    "python.testing.autoTestDiscoverOnSaveEnabled": true,
+    "remote.autoForwardPortsSource": "hybrid",
+    "window.zoomLevel": 1,
+    "workbench.colorCustomizations": {
+        "editor.lineHighlightBackground": "#1073cf2d",
+        "editor.lineHighlightBorder": "#9fced11f"
+    },
+    "workbench.colorTheme": "CHC Dark",
+    "workbench.editor.empty.hint": "hidden",
+    "workbench.editorAssociations": {
+        "*.ipynb": "jupyter-notebook"
+    },
+    "workbench.iconTheme": "material-icon-theme",
+    "workbench.sideBar.location": "right",
+    "workbench.startupEditor": "none",
+    "editor.guides.indentation": true,
+    "terminal.integrated.scrollback": 100000,
+    "editor.formatOnSave": true,
+    "[scss]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "debugpy.debugJustMyCode": false,
+    "github.copilot.editor.enableAutoCompletions": true,
+    "html.format.templating": true,
+    "terminal.integrated.fontFamily": "JetBrainsMono Nerd Font Mono",
+    "explorer.compactFolders": false,
+    "diffEditor.renderSideBySide": false,
+    "markdown.updateLinksOnFileMove.enabled": "prompt",
+    "markdown.validate.enabled": true,
+    "files.associations": {
+        "*.mdc": "markdown"
+    },
+    "diffEditor.ignoreTrimWhitespace": false,
+    "git.openRepositoryInParentFolders": "never",
+    "window.autoDetectColorScheme": false,
+    "editor.quickSuggestions": {
+        "strings": "on"
+    },
+    "terminal.integrated.allowedLinkSchemes": [
+        "file",
+        "http",
+        "https",
+        "mailto",
+        "vscode",
+        "vscode-insiders",
+        "docker-desktop"
+    ],
+    "editor.linkedEditing": true,
+    "editor.smoothScrolling": true,
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+    "files.trimTrailingWhitespace": true,
+    "workbench.commandPalette.experimental.suggestCommands": true,
+    "remote.autoForwardPorts": false,
+    "terminal.integrated.profiles.osx": {
+        "fish": {
+            "path": "/opt/homebrew/bin/fish"
+        }
+    },
+    "terminal.integrated.defaultProfile.osx": "fish"
+}
