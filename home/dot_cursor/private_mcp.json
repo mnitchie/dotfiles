@@ -1,0 +1,26 @@
+{
+  "mcpServers": {
+    "stitch": {
+      "url": "https://stitch.googleapis.com/mcp",
+      "headers": {
+        "X-Goog-Api-Key": "${env:GOOGLE_STITCH_API_KEY}"
+      }
+    },
+    "draw.io": {
+      "url": "https://mcp.draw.io/mcp"
+    },
+    "terraform": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "TFE_TOKEN=",
+        "-e",
+        "ENABLE_TF_OPERATIONS=false",
+        "hashicorp/terraform-mcp-server"
+      ]
+    }
+  }
+}

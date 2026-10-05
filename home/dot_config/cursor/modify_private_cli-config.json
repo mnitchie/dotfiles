@@ -1,0 +1,30 @@
+#!/bin/sh
+# Merge preferences while preserving CLI-managed models, login data, and caches.
+exec jq -s '(.[0] // {}) * {
+  "version": 1,
+  "editor": {
+    "vimMode": false
+  },
+  "permissions": {
+    "allow": [
+      "Shell(ls)"
+    ],
+    "deny": []
+  },
+  "display": {
+    "showLineNumbers": false,
+    "showThinkingBlocks": false,
+    "showStatusIndicators": true,
+    "showStatusLineRunningTime": false,
+    "mode": "zen"
+  },
+  "notifications": true,
+  "hints": true,
+  "modelSlashCommands": true,
+  "steering": true,
+  "rewind": true,
+  "network": {
+    "useHttp1ForAgent": false
+  },
+  "autoAcceptWebSearch": false
+}'

@@ -4,6 +4,8 @@ set -gx XDG_CONFIG_HOME "$HOME/.config"
 set -gx XDG_DATA_HOME "$HOME/.local/share"
 set -gx XDG_STATE_HOME "$HOME/.local/state"
 set -gx XDG_CACHE_HOME "$HOME/.cache"
+# Cursor documents automatic XDG lookup only on Linux/BSD.
+set -gx CURSOR_CONFIG_DIR "$XDG_CONFIG_HOME/cursor"
 
 set -gx PYTHONSTARTUP "$XDG_CONFIG_HOME/python/pythonstartup.py"
 set -gx PYTHON_HISTORY "$XDG_STATE_HOME/python/history"

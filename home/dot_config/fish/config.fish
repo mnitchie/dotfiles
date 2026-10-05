@@ -1,5 +1,5 @@
 if status is-interactive
-    set -g fish_greeting
+    bind \el fish_list_current_token_long
 
     if command -q uv
         uv generate-shell-completion fish | source

@@ -1,10 +1,10 @@
 # Dotfiles
 
-Personal machine setup managed with [chezmoi](https://www.chezmoi.io/). A single `chezmoi init --apply` installs Homebrew, CLI tools, shell, git, SSH, and editor config as real files under `$HOME` (copy mode, not symlinks). Supported platforms: **Apple Silicon macOS** (Intel Macs are refused at init), **Linux** (headless server or desktop with 1Password), and **WSL**.
+Personal dotfiles managed with [chezmoi](https://www.chezmoi.io/). `chezmoi init --apply` installs Homebrew, CLI tools, and configuration under `$HOME`. Supports Apple Silicon macOS, Debian/Ubuntu Linux (desktop or headless), and WSL. Intel Macs are not supported.
 
 ## New machine
 
-**Before the one-liner:** for work secrets, set up 1Password first — or leave the work account prompt blank and secrets are skipped. Chezmoi renders templates before `run_before_` install scripts, and `onepasswordRead` runs only when `op` is already available. If the CLI is missing, that apply installs it and skips work secrets. Run `chezmoi apply` again once `op` can sign in.
+For work secrets, set up 1Password first. Leave the work account prompt blank to skip them. Templates render before install scripts: if the CLI is missing, the first apply skips secrets. Apply again after installing and signing in to the CLI.
 
 | Platform | 1Password before the apply that reads secrets |
 | --- | --- |
@@ -16,9 +16,9 @@ Personal machine setup managed with [chezmoi](https://www.chezmoi.io/). A single
 sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin" -- --use-builtin-git=true init --apply mnitchie
 ```
 
-The installer puts `chezmoi` in `~/.local/bin`; update it later with `chezmoi upgrade`. `mnitchie` resolves to [github.com/mnitchie/dotfiles](https://github.com/mnitchie/dotfiles). The `--` after `-b` passes the rest of the flags to chezmoi; put `--use-builtin-git=true` before `init` so a Mac without Command Line Tools can still clone (Homebrew installs the CLT during apply). Add `--branch <name>` after `init` to test an unmerged branch.
+This installs `chezmoi` in `~/.local/bin` and clones [mnitchie/dotfiles](https://github.com/mnitchie/dotfiles). Update chezmoi with `chezmoi upgrade`. Built-in Git allows cloning before macOS Command Line Tools are installed. Add `--branch <name>` after `init` to test a branch.
 
-`chezmoi init` runs `home/.chezmoi.toml.tmpl` and asks once (via `prompt*Once`). Bool prompts have no default — answer **y** or **n**:
+`chezmoi init` uses `home/.chezmoi.toml.tmpl` to ask these questions once. Answer boolean prompts with **y** or **n**:
 
 | Prompt | When | Notes |
 | --- | --- | --- |
@@ -28,11 +28,11 @@ The installer puts `chezmoi` in `~/.local/bin`; update it later with `chezmoi up
 | Headless Linux (no 1Password app) | Linux only | **y** disables git commit signing and the 1Password SSH agent |
 | Windows user folder name | WSL only | Folder name under `C:\Users\` (spaces allowed) |
 
-On **macOS**, install the **1Password desktop app** separately (from [1Password](https://1password.com/) or the Mac App Store). Git commit signing and the SSH agent use the app’s `op-ssh-sign`; Homebrew only installs the **1Password CLI** (`op`). The first Homebrew install may also prompt for **sudo** and **Xcode Command Line Tools**. On **Linux and WSL**, **apt** and Homebrew setup may prompt for **sudo**.
+Install the [1Password desktop app](https://1password.com/) separately on macOS; Git signing and SSH use it. Homebrew installs only the CLI. Bootstrap may prompt for sudo and, on macOS, Command Line Tools.
 
 ## Daily use
 
-See the chezmoi [daily operations](https://www.chezmoi.io/user-guide/daily-operations/) guide. Edits belong in the **source** tree (`home/`): use `chezmoi cd` or `chezmoi edit` with **destination** paths (e.g. `~/.config/fish/config.fish`).
+Edit sources under `home/`. `chezmoi edit` accepts destination paths, such as `~/.config/fish/config.fish`. See [daily operations](https://www.chezmoi.io/user-guide/daily-operations/).
 
 | Command | Purpose |
 | --- | --- |
@@ -43,25 +43,27 @@ See the chezmoi [daily operations](https://www.chezmoi.io/user-guide/daily-opera
 | `chezmoi re-add` | Copy non-template files you changed under `$HOME` back into the source |
 | `chezmoi cd` | Shell in the source directory |
 
-`chezmoi re-add` updates plain files, including `~/.config/fish/config.fish`. Templates stay on `chezmoi edit` (`~/.config/git/config`, `~/.ssh/config`, `work.fish`, `work-secrets.fish`, and the other `*.tmpl` sources). Do not re-add `~/.config/fish/fish_variables`; fish rewrites that file itself.
+Use `chezmoi re-add` for plain files and `chezmoi edit` for templates. Do not add `~/.config/fish/fish_variables`; fish manages it.
 
 **`editf`** → `chezmoi edit --apply ~/.config/fish/config.fish`; **`reloadf`** → `exec fish`.
 
-Layout: `.chezmoiroot` points at `home/` in this repo. Chezmoi manages `~/.ssh`, `~/.config`, `~/.agents`, and on non-headless Linux desktop `~/.local/share/fonts` (JetBrainsMono Nerd Font).
+`.chezmoiroot` sets `home/` as the source root.
 
 ## Fish
 
-Fish is the login shell. On apply, the login-shell script adds Homebrew's `fish` to `/etc/shells` if needed and switches the user shell to it (`dscl` on macOS, `chsh` on Linux and WSL). That binary is `/opt/homebrew/bin/fish` on macOS and `/home/linuxbrew/.linuxbrew/bin/fish` on Linux and WSL.
+Bootstrap registers Homebrew’s fish in `/etc/shells` and sets it as the login shell (`dscl` on macOS, `chsh` on Linux/WSL). It uses `/opt/homebrew/bin/fish` on macOS and `/home/linuxbrew/.linuxbrew/bin/fish` on Linux/WSL.
 
-A login fish puts `~/.local/bin`, then Homebrew's `bin` and `sbin`, in front of `PATH`. On macOS it runs `path_helper` first, because fish does not read `/etc/zprofile`. A non-login fish does not touch `PATH`, so an active virtualenv stays first. `reloadf` starts a non-login shell.
+Login shells prepend `~/.local/bin` and Homebrew’s `bin` and `sbin` to `PATH`. macOS system paths come from `path_helper`, since fish does not read `/etc/zprofile`. Non-login shells inherit PATH; fnm adds its Node.js directory during interactive startup. `reloadf` starts a non-login shell.
 
-Every fish sets the XDG directories, `EDITOR`, `PAGER`, the Homebrew variables, and the Python, less, psql, and sqlite history paths. Interactive startup wires starship, zoxide (`cd`), fnm, fzf (when stdin is a terminal), and uv / op completions. Syntax highlighting and autosuggestions are built in. `df`, `du`, `find`, and `grep` print a nudge toward `duf`, `dust`, `fd`, and `rg`.
+All shells set XDG directories, tool environment variables, and history paths. Interactive shells load Starship, zoxide (`cd`), fnm, fzf, and uv/op completions. Fish provides syntax highlighting and autosuggestions.
 
-`~/.config/fish/config.fish` is the entry point. Fish sources `~/.config/fish/conf.d/*.fish` before that (environment, aliases, command nudges, plus the darwin, WSL, work, and work-secrets files when those templates apply). `~/.config/fish/local.fish`, when present, is sourced last and is not managed. Fish maintains `~/.config/fish/fish_variables`; leave it out of the source repo.
+Plain `history` and fzf’s `Ctrl-R` view show readable dates and times.
+
+Fish loads `conf.d/*.fish` before `config.fish`. Interactive shells source unmanaged `~/.config/fish/local.fish` last.
 
 ## Add a Homebrew package
 
-Edit `home/.chezmoidata/packages.yaml` in the source (via `chezmoi edit` or after `chezmoi cd`):
+Run `chezmoi cd`, then edit `home/.chezmoidata/packages.yaml`:
 
 - **`brews`** — all platforms (`brew bundle` in `run_onchange_before_10-install-packages.sh.tmpl`)
 - **`casks`** — macOS only (e.g. `font-jetbrains-mono-nerd-font`, `1password-cli`)
@@ -73,7 +75,10 @@ Run `chezmoi apply` so the package script re-runs.
 
 ## CLI tools
 
-A few of the `brews` in `home/.chezmoidata/packages.yaml` replace everyday commands. Interactive fish aliases `cat` to `bat --paging=never` and `ls` to `eza --icons=always`, and wires zoxide in as `cd`. fzf loads when stdin is a terminal. `df`, `du`, `find`, and `grep` print a nudge toward `duf`, `dust`, `fd`, and `rg`.
+Interactive fish uses `bat --paging=never` for `cat`, `eza --icons=always --total-size` for `ls`, and zoxide for `cd`. fzf key bindings load when stdin is a terminal. `df`, `du`, `find`, and `grep` suggest `duf`, `dust`, `fd`, and `rg` on stderr.
+
+`fd` includes hidden files by default and prints a reminder on stderr to add
+`--no-ignore` when you also want files excluded by ignore rules.
 
 ### bat
 
@@ -129,7 +134,7 @@ The binary is `rg`. Searches skip hidden files, binaries, and anything in `.giti
 
 ### tldr
 
-Short examples for a command. Homebrew’s `tldr` formula is disabled, so the package is `tlrc`; the binary is still `tldr`. The first run downloads the pages. The cache refreshes on its own after two weeks. Several words are joined with hyphens, so `tldr git checkout` is the `git-checkout` page.
+Command examples, provided by `tlrc` as `tldr`. Pages download on first use and refresh automatically. Use `tldr git checkout` for the `git-checkout` page.
 
 | Command | Purpose |
 | --- | --- |
@@ -139,7 +144,7 @@ Short examples for a command. Homebrew’s `tldr` formula is disabled, so the pa
 
 ### llm
 
-Installed with `uv tool install`, not Homebrew. The binary is `~/.local/bin/llm`. The `llm-ollama` plugin is installed into that same environment (`--with`), so `uv tool upgrade llm` keeps it. `llm models` lists Ollama models while the Ollama app is running.
+Installed at `~/.local/bin/llm` with `uv tool install --with llm-ollama`. `uv tool upgrade llm` preserves the plugin. Run Ollama to list its models.
 
 | Command | Purpose |
 | --- | --- |
@@ -161,7 +166,7 @@ Installed with `uv tool install`, not Homebrew. The binary is `~/.local/bin/llm`
 
 Add a template under `home/` whose **entire body** is inside `{{- if ... -}}` … `{{- end -}}` (no stray newlines outside the trim markers). Example: `conf.d/20-darwin.fish.tmpl` uses `{{- if eq .platform "darwin" -}}`.
 
-Template **data keys** (other templates use these, not `.chezmoi.os` / `.chezmoi.arch`).
+Templates use these data keys:
 
 From `home/.chezmoi.toml.tmpl`, written to `~/.config/chezmoi/chezmoi.toml` at `chezmoi init`:
 
@@ -183,7 +188,7 @@ From `home/.chezmoidata/`, updated on `chezmoi apply` and `chezmoi update`:
 | `signingKey`, `workSigningKey` | `identity.yaml` | SSH signing public keys |
 | `jetbrainsMonoNerdFont` | `fonts.yaml` | Linux desktop Nerd Font URL and checksum |
 
-A config file created before this split can still contain `name`, `email`, `signingKey`, and `workSigningKey`. Those config values override `.chezmoidata`. Run `chezmoi update --init` once; `prompt*Once` keeps the answers already stored.
+Older chezmoi configs may override identity data. Run `chezmoi update --init` to regenerate the config while keeping stored prompt answers.
 
 Skip a whole directory on some machines by listing it in `home/.chezmoiignore` (patterns are templates even without `.tmpl`). Keep a single file's platform differences inside an `{{- if -}}` body so an empty render removes the file.
 
@@ -196,15 +201,17 @@ When **Work machine** is true, apply produces:
 - `~/.config/git/work`
 - `[includeIf "gitdir:~/git/strata/"]` → `work` in git config
 
-When a job ends, in the **source**: clear `work.fish.tmpl`. Fish sources every `*.fish` file in `conf.d`, so old config has to leave that directory. Remove `private_work-secrets.fish.tmpl` as well if those secrets should stop being exported.
+When a job ends, set `work = false` in `~/.config/chezmoi/chezmoi.toml` and apply. Work templates render empty, removing their destination files.
 
 ## Secrets and local overrides
 
 Nothing secret is committed. Templates may use `onepasswordRead` for 1Password values.
 
+Cursor's global MCP config is managed at `~/.cursor/mcp.json` by `home/dot_cursor/private_mcp.json`. It includes Stitch, draw.io, and Terraform (requires Docker, with operations disabled). Stitch always references `${env:GOOGLE_STITCH_API_KEY}`; Cursor must inherit that variable from its environment. The installed file has mode 0600 (owner read/write only). Edit the source JSON rather than the installed copy; Cursor does not document `~/.agents/mcp.json` as a configuration location.
+
 ### Work secrets
 
-On work machines with `opWorkAccount` set and `op` already installed, `chezmoi apply` reads three items from the **Private** vault in your **work** 1Password account (the sign-in address you set as `opWorkAccount` at init — not the Private vault on a personal account). `op read` resolves vault name, item title, then field label, so item type does not matter (a Login item with added custom fields works). Each item needs these field labels. Labels must be unique within the item, and item titles must be unique in the vault.
+With `work = true`, `opWorkAccount` set, and the CLI installed, apply reads these items from the work account’s **Private** vault. Item titles and field labels must be unique. Any item type can hold the fields.
 
 | Item | Field labels |
 | --- | --- |
@@ -212,7 +219,7 @@ On work machines with `opWorkAccount` set and `op` already installed, `chezmoi a
 | **Cloudflare** | `credential` |
 | **Google Stitch** | `credential` |
 
-That renders `~/.config/fish/conf.d/work-secrets.fish` (mode 0600) with `FURY_AUTH`, `UV_INDEX_GEMFURY_USERNAME`, `UV_INDEX_GEMFURY_PASSWORD` (`NOPASS`), `CLOUDFLARE_API_TOKEN`, and `GOOGLE_STITCH_API_KEY`. Chezmoi runs `op` (or `op.exe` on WSL) while rendering the template. With the desktop app and CLI integration enabled, approve the app prompt (Touch ID on macOS, Windows or Linux app authentication). On headless Linux (no app), run `op account add` before that render; chezmoi then runs `op signin`, which asks for the account password in the terminal. When `op` is not installed yet, the secrets file is left absent and the package script installs the CLI; apply again after `op` can sign in.
+The template creates `~/.config/fish/conf.d/work-secrets.fish` with mode 0600 and exports `FURY_AUTH`, `UV_INDEX_GEMFURY_USERNAME`, `UV_INDEX_GEMFURY_PASSWORD` (`NOPASS`), `CLOUDFLARE_API_TOKEN`, and `GOOGLE_STITCH_API_KEY`. Chezmoi authenticates through the desktop app, or `op signin` on headless Linux. WSL uses `op.exe`.
 
 Not managed by chezmoi — create on the machine:
 
@@ -239,9 +246,35 @@ Starship needs a [Nerd Font](https://www.nerdfonts.com/). Use **JetBrainsMono Ne
 
 `home/.chezmoiexternal.toml.tmpl` fetches at apply time:
 
-- `~/.agents/skills/gh-stack/`
+- Third-party skills in `~/.agents/skills/`: `gh-stack` and `daisyui`
 - Linux desktop Nerd Font, pinned in `home/.chezmoidata/fonts.yaml`
+
+## Cursor CLI
+
+Fish sets `CURSOR_CONFIG_DIR` to `$XDG_CONFIG_HOME/cursor`, so the CLI reads
+`~/.config/cursor/cli-config.json` on macOS and Linux/WSL. Preferences are merged
+by `home/dot_config/cursor/modify_private_cli-config.json`; edit that source,
+then apply. The installed file has mode 0600. Login data, model selections, and
+CLI caches remain local and are preserved by the merge.
+
+## User skills
+
+`~/.agents/skills/` is the shared user-level skills directory. Use the plural
+`.agents`; clients do not discover `~/.config/agents/` by default. Cursor-managed
+built-ins and plugin caches remain owned by their clients.
+
+Third-party skills are declared in `home/.chezmoiexternal.toml.tmpl`, with a
+one-week (`168h`) download refresh period. Local skills such as `simplify` are
+tracked under `home/dot_agents/skills/`; edit those sources, then apply.
+
+`chezmoi update` pulls this dotfiles repository and applies it. Changing an
+external URL downloads the new source. Externals using a moving branch URL
+refresh on apply once their cached download is at least a week old; use
+`chezmoi update --refresh-externals` to force a download sooner. A pinned release
+or commit stays at that version until its URL and checksum are changed.
+
+Keep each user skill installed in one place.
 
 ## CI
 
-[`.github/workflows/bootstrap.yml`](.github/workflows/bootstrap.yml) runs on pull requests and on pushes to `main`, on `ubuntu-latest` and `macos-latest`. It runs the one-liner above with `--branch` and non-interactive answers for the prompts that machine asks, checks that a second `chezmoi apply` changes nothing, and smoke-tests login fish, a nested non-login fish, core CLI tools, and the delta pager.
+[Bootstrap CI](.github/workflows/bootstrap.yml) runs on pull requests and pushes to `main`, on Ubuntu and macOS. It installs the branch with non-interactive answers, checks apply idempotence, and smoke-tests fish, CLI tools, and the Git pager.
