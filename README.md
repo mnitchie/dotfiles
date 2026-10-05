@@ -32,7 +32,7 @@ On **macOS**, install the **1Password desktop app** separately (from [1Password]
 
 ## Daily use
 
-See the chezmoi [daily operations](https://www.chezmoi.io/user-guide/daily-operations/) guide. Edits belong in the **source** tree (`home/`): use `chezmoi cd` or `chezmoi edit` with **destination** paths (e.g. `~/.config/zsh/.zshrc`).
+See the chezmoi [daily operations](https://www.chezmoi.io/user-guide/daily-operations/) guide. Edits belong in the **source** tree (`home/`): use `chezmoi cd` or `chezmoi edit` with **destination** paths (e.g. `~/.config/fish/config.fish`).
 
 | Command | Purpose |
 | --- | --- |
@@ -43,19 +43,21 @@ See the chezmoi [daily operations](https://www.chezmoi.io/user-guide/daily-opera
 | `chezmoi re-add` | Copy non-template files you changed under `$HOME` back into the source |
 | `chezmoi cd` | Shell in the source directory |
 
-`chezmoi re-add` updates plain files, including `~/.config/zsh/.zshrc` and `~/.config/fish/config.fish`. Templates stay on `chezmoi edit` (`~/.zshenv`, `~/.config/git/config`, `~/.ssh/config`, `work.zsh`, and the other `*.tmpl` sources). Do not re-add `~/.config/fish/fish_variables`; fish rewrites that file itself.
+`chezmoi re-add` updates plain files, including `~/.config/fish/config.fish`. Templates stay on `chezmoi edit` (`~/.config/git/config`, `~/.ssh/config`, `work.fish`, `work-secrets.fish`, and the other `*.tmpl` sources). Do not re-add `~/.config/fish/fish_variables`; fish rewrites that file itself.
 
-Aliases (when `chezmoi` / `zsh` are on `PATH`): **`editz`** → `chezmoi edit --apply ~/.config/zsh/.zshrc`; **`reloadz`** → `exec zsh`. Fish equivalents are **`editf`** and **`reloadf`** (see [Fish](#fish)).
+**`editf`** → `chezmoi edit --apply ~/.config/fish/config.fish`; **`reloadf`** → `exec fish`.
 
-Layout: `.chezmoiroot` points at `home/` in this repo. The only **zsh** file in `$HOME` is `~/.zshenv` (it sets `ZDOTDIR=~/.config/zsh`). Chezmoi also manages `~/.ssh`, `~/.config`, `~/.agents`, and on non-headless Linux desktop `~/.local/share/fonts` (JetBrainsMono Nerd Font). `dot_zshrc` loads `conf.d/*.zsh` in order, **skipping** `_*.zsh`, then `local.zsh` if present.
+Layout: `.chezmoiroot` points at `home/` in this repo. Chezmoi manages `~/.ssh`, `~/.config`, `~/.agents`, and on non-headless Linux desktop `~/.local/share/fonts` (JetBrainsMono Nerd Font).
 
 ## Fish
 
-Fish is installed for trying out. zsh stays the login shell: on Linux and WSL the login-shell script still runs `chsh` to `/usr/bin/zsh`. From that zsh, run `fish`.
+Fish is the login shell. On apply, the login-shell script adds Homebrew's `fish` to `/etc/shells` if needed and switches the user shell to it (`dscl` on macOS, `chsh` on Linux and WSL). That binary is `/opt/homebrew/bin/fish` on macOS and `/home/linuxbrew/.linuxbrew/bin/fish` on Linux and WSL.
 
-The new shell inherits the environment, including `PATH` and exported work secrets, and keeps that `PATH` order (an active virtualenv stays first). Interactive startup wires starship, zoxide (`cd`), fnm, fzf (when stdin is a terminal), and uv / op completions. Syntax highlighting and autosuggestions are built into fish.
+A login fish puts `~/.local/bin`, then Homebrew's `bin` and `sbin`, in front of `PATH`. On macOS it runs `path_helper` first, because fish does not read `/etc/zprofile`. A non-login fish does not touch `PATH`, so an active virtualenv stays first. `reloadf` starts a non-login shell.
 
-`~/.config/fish/config.fish` is the entry point. Fish itself sources `~/.config/fish/conf.d/*.fish` before that (aliases, plus the darwin, WSL, and work files when those templates apply). **`editf`** → `chezmoi edit --apply ~/.config/fish/config.fish`; **`reloadf`** → `exec fish`. `~/.config/fish/local.fish`, when present, is sourced last and is not managed. Fish maintains `~/.config/fish/fish_variables`; leave it out of the source repo.
+Every fish sets the XDG directories, `EDITOR`, `PAGER`, the Homebrew variables, and the Python, less, psql, and sqlite history paths. Interactive startup wires starship, zoxide (`cd`), fnm, fzf (when stdin is a terminal), and uv / op completions. Syntax highlighting and autosuggestions are built in. `df`, `du`, `find`, and `grep` print a nudge toward `duf`, `dust`, `fd`, and `rg`.
+
+`~/.config/fish/config.fish` is the entry point. Fish sources `~/.config/fish/conf.d/*.fish` before that (environment, aliases, command nudges, plus the darwin, WSL, work, and work-secrets files when those templates apply). `~/.config/fish/local.fish`, when present, is sourced last and is not managed. Fish maintains `~/.config/fish/fish_variables`; leave it out of the source repo.
 
 ## Add a Homebrew package
 
@@ -71,7 +73,7 @@ Run `chezmoi apply` so the package script re-runs.
 
 ## CLI tools
 
-A few of the `brews` in `home/.chezmoidata/packages.yaml` replace everyday commands. Interactive zsh and fish alias `cat` to `bat --paging=never` and `ls` to `eza --icons=always`, and wire zoxide in as `cd`. fzf loads when stdin is a terminal. In zsh, `df`, `du`, and `grep` print a nudge toward `duf`, `dust`, and `rg`.
+A few of the `brews` in `home/.chezmoidata/packages.yaml` replace everyday commands. Interactive fish aliases `cat` to `bat --paging=never` and `ls` to `eza --icons=always`, and wires zoxide in as `cd`. fzf loads when stdin is a terminal. `df`, `du`, `find`, and `grep` print a nudge toward `duf`, `dust`, `fd`, and `rg`.
 
 ### bat
 
@@ -157,7 +159,7 @@ Installed with `uv tool install`, not Homebrew. The binary is `~/.local/bin/llm`
 
 ## Add a file on one platform only
 
-Add a template under `home/` whose **entire body** is inside `{{- if ... -}}` … `{{- end -}}` (no stray newlines outside the trim markers). Example: `conf.d/20-darwin.zsh.tmpl` uses `{{- if eq .platform "darwin" -}}`.
+Add a template under `home/` whose **entire body** is inside `{{- if ... -}}` … `{{- end -}}` (no stray newlines outside the trim markers). Example: `conf.d/20-darwin.fish.tmpl` uses `{{- if eq .platform "darwin" -}}`.
 
 Template **data keys** (other templates use these, not `.chezmoi.os` / `.chezmoi.arch`).
 
@@ -189,13 +191,12 @@ Skip a whole directory on some machines by listing it in `home/.chezmoiignore` (
 
 When **Work machine** is true, apply produces:
 
-- `~/.config/zsh/conf.d/work.zsh` (from `home/dot_config/zsh/conf.d/work.zsh.tmpl`)
-- `~/.config/zsh/conf.d/work-secrets.zsh` (from `private_work-secrets.zsh.tmpl`, when `opWorkAccount` is set and `op` is already installed)
 - `~/.config/fish/conf.d/work.fish` (from `home/dot_config/fish/conf.d/work.fish.tmpl`)
+- `~/.config/fish/conf.d/work-secrets.fish` (from `private_work-secrets.fish.tmpl`, when `opWorkAccount` is set and `op` is already installed)
 - `~/.config/git/work`
 - `[includeIf "gitdir:~/git/strata/"]` → `work` in git config
 
-When a job ends, in the **source**: clear or trim `work.zsh.tmpl` and add `home/dot_config/zsh/conf.d/_<company>.zsh` with the old contents. `_*.zsh` files are never sourced. Clear `work.fish.tmpl` too. Fish sources every `*.fish` file in `conf.d`, so old fish config has to leave that directory.
+When a job ends, in the **source**: clear `work.fish.tmpl`. Fish sources every `*.fish` file in `conf.d`, so old config has to leave that directory. Remove `private_work-secrets.fish.tmpl` as well if those secrets should stop being exported.
 
 ## Secrets and local overrides
 
@@ -211,13 +212,12 @@ On work machines with `opWorkAccount` set and `op` already installed, `chezmoi a
 | **Cloudflare** | `credential` |
 | **Google Stitch** | `credential` |
 
-That renders `~/.config/zsh/conf.d/work-secrets.zsh` (mode 0600) with `FURY_AUTH`, `UV_INDEX_GEMFURY_USERNAME`, `UV_INDEX_GEMFURY_PASSWORD` (`NOPASS`), `CLOUDFLARE_API_TOKEN`, and `GOOGLE_STITCH_API_KEY`. Chezmoi runs `op` (or `op.exe` on WSL) while rendering the template. With the desktop app and CLI integration enabled, approve the app prompt (Touch ID on macOS, Windows or Linux app authentication). On headless Linux (no app), run `op account add` before that render; chezmoi then runs `op signin`, which asks for the account password in the terminal. When `op` is not installed yet, the secrets file is left absent and the package script installs the CLI; apply again after `op` can sign in.
+That renders `~/.config/fish/conf.d/work-secrets.fish` (mode 0600) with `FURY_AUTH`, `UV_INDEX_GEMFURY_USERNAME`, `UV_INDEX_GEMFURY_PASSWORD` (`NOPASS`), `CLOUDFLARE_API_TOKEN`, and `GOOGLE_STITCH_API_KEY`. Chezmoi runs `op` (or `op.exe` on WSL) while rendering the template. With the desktop app and CLI integration enabled, approve the app prompt (Touch ID on macOS, Windows or Linux app authentication). On headless Linux (no app), run `op account add` before that render; chezmoi then runs `op signin`, which asks for the account password in the terminal. When `op` is not installed yet, the secrets file is left absent and the package script installs the CLI; apply again after `op` can sign in.
 
 Not managed by chezmoi — create on the machine:
 
 | File | Role |
 | --- | --- |
-| `~/.config/zsh/local.zsh` | Extra zsh (sourced last) |
 | `~/.config/fish/local.fish` | Extra fish (sourced last, interactive) |
 | `~/.config/git/local` | Git overrides |
 | `~/.ssh/config.local` | SSH overrides on macOS / Linux desktop |
@@ -244,4 +244,4 @@ Starship needs a [Nerd Font](https://www.nerdfonts.com/). Use **JetBrainsMono Ne
 
 ## CI
 
-[`.github/workflows/bootstrap.yml`](.github/workflows/bootstrap.yml) runs on pull requests and on pushes to `main`, on `ubuntu-latest` and `macos-latest`. It runs the one-liner above with `--branch` and non-interactive answers for the prompts that machine asks, checks that a second `chezmoi apply` changes nothing, and smoke-tests login `zsh`, an interactive `fish` started from that zsh, core CLI tools, and the delta pager.
+[`.github/workflows/bootstrap.yml`](.github/workflows/bootstrap.yml) runs on pull requests and on pushes to `main`, on `ubuntu-latest` and `macos-latest`. It runs the one-liner above with `--branch` and non-interactive answers for the prompts that machine asks, checks that a second `chezmoi apply` changes nothing, and smoke-tests login fish, a nested non-login fish, core CLI tools, and the delta pager.

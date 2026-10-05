@@ -1,7 +1,5 @@
-# zsh remains the login shell. Start this one with `fish`.
-# PATH and other exports come from the parent (including a virtualenv at the
-# front). Do not reorder PATH here; a non-login fish should keep that order,
-# the same way a nested non-login zsh does.
+# Login fish sets PATH in conf.d/00-env.fish. Do not reorder PATH here; a
+# non-login fish keeps the inherited order, including a virtualenv at the front.
 
 if status is-interactive
     # The default greeting prints before the prompt.
@@ -16,7 +14,7 @@ if status is-interactive
         op completion fish | source
     end
 
-    # Key bindings need a terminal. Same gate as zsh (`-t 0`).
+    # Key bindings need a terminal.
     if command -q fzf; and isatty stdin
         fzf --fish | source
     end

@@ -19,6 +19,11 @@ cask {{ . | quote }}
 {{ end -}}
 {{ end -}}
 EOF
+for formula in zsh-autosuggestions zsh-syntax-highlighting; do
+  if "${brew}" list --formula "${formula}" >/dev/null 2>&1; then
+    "${brew}" uninstall --formula "${formula}"
+  fi
+done
 {{ range .uvTools -}}
 "{{ $.brewPrefix }}/bin/uv" tool install{{ range .with }} --with {{ . | quote }}{{ end }} {{ .name | quote }}
 {{ end -}}

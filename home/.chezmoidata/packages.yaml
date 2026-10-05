@@ -27,8 +27,6 @@ brews:
   - vim
   - wget
   - zoxide
-  - zsh-autosuggestions
-  - zsh-syntax-highlighting
 
 # Homebrew's llm formula is unreliable. Install with uv after brew bundle.
 # `with` entries are `uv tool install --with` packages, kept across `uv tool upgrade`.
@@ -43,7 +41,7 @@ casks:
   - 1password-cli
   - font-jetbrains-mono-nerd-font
 
-# Homebrew's Debian/Ubuntu requirements, plus the login shell.
+# Homebrew's Debian/Ubuntu requirements.
 # https://docs.brew.sh/Homebrew-on-Linux
 apt:
   - build-essential
@@ -52,7 +50,6 @@ apt:
   - file
   - git
   - less
-  - zsh
 
 # Non-headless linux only. fontconfig provides fc-cache for the Nerd Font.
 aptLinuxDesktop:

@@ -1,0 +1,75 @@
+# XDG and tool paths for every fish. PATH is rearranged only for a login
+# shell, so a nested fish keeps an active virtualenv at the front.
+
+set -gx XDG_CONFIG_HOME "$HOME/.config"
+set -gx XDG_DATA_HOME "$HOME/.local/share"
+set -gx XDG_STATE_HOME "$HOME/.local/state"
+set -gx XDG_CACHE_HOME "$HOME/.cache"
+
+set -gx PYTHONSTARTUP "$XDG_CONFIG_HOME/python/pythonstartup.py"
+set -gx PYTHON_HISTORY "$XDG_STATE_HOME/python/history"
+set -gx IPYTHONDIR "$XDG_CONFIG_HOME/ipython"
+set -gx LESSHISTFILE "$XDG_STATE_HOME/less/history"
+set -gx PSQL_HISTORY "$XDG_STATE_HOME/psql/history"
+set -gx SQLITE_HISTORY "$XDG_STATE_HOME/sqlite/history"
+# macOS matplotlib ignores XDG and uses ~/.matplotlib for config and the font cache.
+# MPLCONFIGDIR moves both. This directory has no matplotlibrc, only the font cache.
+set -gx MPLCONFIGDIR "$XDG_CACHE_HOME/matplotlib"
+
+set -gx EDITOR vim
+set -gx PAGER less
+
+for dir in $XDG_STATE_HOME/python $XDG_STATE_HOME/less $XDG_STATE_HOME/psql $XDG_STATE_HOME/sqlite $XDG_CACHE_HOME/npm
+    test -d $dir
+    or mkdir -p -- $dir
+end
+
+set -l brew_prefix "{{ .brewPrefix }}"
+
+if status is-login
+    # fish does not read /etc/zprofile, so macOS path_helper never runs unless
+    # we call it. It leaves Homebrew behind the system directories.
+    if test -x /usr/libexec/path_helper
+        for line in (/usr/libexec/path_helper -s)
+            set -l m (string match -r -- '^(PATH|MANPATH)="([^"]*)"' $line)
+            if set -q m[2]
+                set -gx $m[2] (string split : -- $m[3])
+            end
+        end
+    end
+
+    set -l front $HOME/.local/bin
+    if test -d $brew_prefix
+        set -a front $brew_prefix/bin $brew_prefix/sbin
+    end
+    set -l rest
+    for p in $PATH
+        if not contains -- $p $front
+            set -a rest $p
+        end
+    end
+    set -gx PATH $front $rest
+end
+
+if test -d $brew_prefix
+    set -gx HOMEBREW_PREFIX $brew_prefix
+    set -gx HOMEBREW_CELLAR $brew_prefix/Cellar
+{{- if eq .platform "darwin" }}
+    set -gx HOMEBREW_REPOSITORY $brew_prefix
+{{- else }}
+    set -gx HOMEBREW_REPOSITORY $brew_prefix/Homebrew
+{{- end }}
+    # Leading empty element exports as a leading colon, so man keeps its
+    # default path. Same normalization as brew shellenv.
+    if set -q MANPATH[1]
+        set -gx MANPATH '' (string match -v -- '' $MANPATH)
+    end
+    set -l brew_info $brew_prefix/share/info
+    if not string match -q -- "$brew_info*" -- "$INFOPATH"
+        if test -n "$INFOPATH"
+            set -gx INFOPATH "$brew_info:$INFOPATH"
+        else
+            set -gx INFOPATH "$brew_info:"
+        end
+    end
+end

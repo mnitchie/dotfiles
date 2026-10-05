@@ -29,8 +29,7 @@ format = '\[[$symbol$version]($style)\] '
 python_binary = [".venv/bin/python", "python", "python3"]
 
 [shell]
-disabled = false
-fish_indicator = '🐟'
+disabled = true
 
 # Hidden at the top-level shell. Once nested, the symbol repeats once per level.
 [shlvl]

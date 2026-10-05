@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# chsh only accepts a shell listed in /etc/shells. Homebrew's fish is not listed until this adds it.
+fish="{{ .brewPrefix }}/bin/fish"
+if [[ ! -x "${fish}" ]]; then
+  printf 'fish is not installed at %s\n' "${fish}" >&2
+  exit 1
+fi
+if ! /usr/bin/grep -qxF "${fish}" /etc/shells; then
+  printf '%s\n' "${fish}" | sudo /usr/bin/tee -a /etc/shells >/dev/null
+fi
+
+user="$(/usr/bin/id -un)"
+{{ if eq .platform "darwin" -}}
+login_shell="$(/usr/bin/dscl . -read "/Users/${user}" UserShell | /usr/bin/awk '{print $2}')"
+if [[ "${login_shell}" != "${fish}" ]]; then
+  sudo /usr/bin/dscl . -create "/Users/${user}" UserShell "${fish}"
+fi
+{{ else -}}
+passwd_entry="$(/usr/bin/getent passwd "${user}")"
+login_shell="${passwd_entry##*:}"
+if [[ "${login_shell}" != "${fish}" ]]; then
+  sudo /usr/bin/chsh -s "${fish}" "${user}"
+fi
+if /usr/bin/dpkg -s zsh >/dev/null 2>&1; then
+  sudo DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get remove -y zsh
+fi
+{{ end -}}
