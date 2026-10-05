@@ -1,0 +1,150 @@
+{
+    "[html]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[javascriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[json]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[python]": {
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit"
+        },
+        "editor.formatOnType": true,
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "charliermarsh.ruff"
+    },
+    "ruff.nativeServer": "on",
+    "[yaml]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "breadcrumbs.enabled": true,
+    "debug.inlineValues": "on",
+    "editor.bracketPairColorization.enabled": true,
+    "editor.codeActionsOnSave": {},
+    "editor.formatOnSaveMode": "modificationsIfAvailable",
+    "editor.guides.bracketPairs": false,
+    "editor.inlineSuggest.enabled": true,
+    "editor.minimap.enabled": true,
+    "editor.multiCursorLimit": 100000,
+    "editor.multiCursorModifier": "ctrlCmd",
+    "editor.renderWhitespace": "all",
+    "editor.rulers": [
+        120
+    ],
+    "editor.stickyScroll.enabled": true,
+    "files.exclude": {
+        ".venv": true,
+        "**/__pycache__": true,
+        "**/.pytest_cache": true
+    },
+    "emmet.includeLanguages": {
+        "django-html": "html"
+    },
+    "gitlens.codeLens.scopes": [
+        "document",
+        "containers",
+        "blocks"
+    ],
+    "gitlens.telemetry.enabled": false,
+    "python.autoComplete.extraPaths": [],
+    "python.testing.autoTestDiscoverOnSaveEnabled": true,
+    "remote.autoForwardPortsSource": "hybrid",
+    "window.zoomLevel": 1,
+    "workbench.colorCustomizations": {
+        "editor.lineHighlightBackground": "#1073cf2d",
+        "editor.lineHighlightBorder": "#9fced11f"
+    },
+    "workbench.editor.empty.hint": "hidden",
+    "workbench.editorAssociations": {
+        "*.ipynb": "jupyter-notebook"
+    },
+    "workbench.iconTheme": "material-icon-theme",
+    "workbench.sideBar.location": "right",
+    "workbench.startupEditor": "none",
+    "editor.guides.indentation": true,
+    "terminal.integrated.scrollback": 100000,
+    "terminal.integrated.fontFamily": "JetBrainsMono Nerd Font Mono",
+    "[scss]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "debugpy.debugJustMyCode": false,
+    "html.format.templating": true,
+    "cursor.cpp.disabledLanguages": [
+        "scminput"
+    ],
+    "cursor.cpp.enablePartialAccepts": true,
+    "[css]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "python.testing.pytestEnabled": true,
+    "[django-html]": {
+        "editor.defaultFormatter": "monosans.djlint"
+    },
+    "explorer.compactFolders": false,
+    "cursor.cmdk.useThemedDiffBackground": true,
+    "diffEditor.renderSideBySide": false,
+    "ruff.configurationPreference": "filesystemFirst",
+    "markdown.updateLinksOnFileMove.enabled": "prompt",
+    "markdown.validate.enabled": true,
+    "files.associations": {
+        "*.mdc": "markdown"
+    },
+    "diffEditor.ignoreTrimWhitespace": false,
+    "cursor.composer.shouldChimeAfterChatFinishes": true,
+    "[markdown]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[sql]": {
+        "editor.defaultFormatter": "adpyke.vscode-sql-formatter"
+    },
+    "cursorpyright.analysis.autoImportCompletions": true,
+    "cursorpyright.analysis.exclude": [
+        "**/migrations/*.py"
+    ],
+    "cursorpyright.analysis.extraPaths": [],
+    "cursorpyright.analysis.typeCheckingMode": "basic",
+    "cursor.windowSwitcher.sidebarHoverCollapsed": true,
+    "cursor.composer.usageSummaryDisplay": "always",
+    "git.openRepositoryInParentFolders": "never",
+    "redhat.telemetry.enabled": false,
+    "files.autoSave": "onFocusChange",
+    "window.autoDetectColorScheme": false,
+    "githubPullRequests.fileListLayout": "flat",
+    "editor.quickSuggestions": {
+        "strings": "on"
+    },
+    "terminal.integrated.allowedLinkSchemes": [
+        "file",
+        "http",
+        "https",
+        "mailto",
+        "vscode",
+        "vscode-insiders",
+        "docker-desktop"
+    ],
+    "cursor.composer.queueMessageDefaultBehavior": "steer",
+    "editor.linkedEditing": true,
+    "editor.smoothScrolling": true,
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+    "files.trimTrailingWhitespace": true,
+    "workbench.commandPalette.experimental.suggestCommands": true,
+    "remote.autoForwardPorts": false,
+    "workbench.colorTheme": "CHC Dark",
+    "terminal.integrated.profiles.osx": {
+        "fish": {
+            "path": "/opt/homebrew/bin/fish"
+        }
+    },
+    "terminal.integrated.defaultProfile.osx": "fish"
+}

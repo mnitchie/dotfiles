@@ -1,0 +1,3 @@
+{{- if ne .platform "darwin" }}
+Library/
+{{- end }}
