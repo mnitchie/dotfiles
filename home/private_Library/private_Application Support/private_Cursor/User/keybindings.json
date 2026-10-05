@@ -1,0 +1,60 @@
+[
+    {
+        "key": "ctrl+`",
+        "command": "workbench.action.terminal.focus"
+    },
+    {
+        "key": "ctrl+`",
+        "command": "workbench.action.focusActiveEditorGroup",
+        "when": "terminalFocus"
+    },
+    {
+        "key": "ctrl+`",
+        "command": "-workbench.action.terminal.toggleTerminal",
+        "when": "terminal.active"
+    },
+    {
+        "key": "cmd+[",
+        "command": "-editor.action.outdentLines",
+        "when": "editorTextFocus && !editorReadonly"
+    },
+    {
+        "key": "cmd+]",
+        "command": "-editor.action.indentLines",
+        "when": "editorTextFocus && !editorReadonly"
+    },
+    {
+        "key": "cmd+[",
+        "command": "workbench.action.navigateBack",
+        "when": "canNavigateBack"
+    },
+    {
+        "key": "ctrl+-",
+        "command": "-workbench.action.navigateBack",
+        "when": "canNavigateBack"
+    },
+    {
+        "key": "cmd+]",
+        "command": "workbench.action.navigateForward",
+        "when": "canNavigateForward"
+    },
+    {
+        "key": "ctrl+shift+-",
+        "command": "-workbench.action.navigateForward",
+        "when": "canNavigateForward"
+    },
+    {
+        "key": "cmd+i",
+        "command": "composerMode.agent"
+    },
+    {
+        "key": "cmd+1",
+        "command": "-glass.goToChat1",
+        "when": "isGlassAgentWorkspace"
+    },
+    {
+        "key": "cmd+1",
+        "command": "-glass.goToChat1",
+        "when": "isGlassAgentWorkspace && terminalFocusInAny"
+    }
+]
