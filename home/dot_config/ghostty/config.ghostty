@@ -1,0 +1,6 @@
+# Documentation can be found at:
+# https://ghostty.org/docs/config
+# ghostty +show-config --default --docs
+
+shell-integration-features = ssh-terminfo,ssh-env
+theme = Dark Pastel
