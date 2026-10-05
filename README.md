@@ -124,6 +124,16 @@ The binary is `rg`. Searches skip hidden files, binaries, and anything in `.giti
 | `rg -t py 'def '` | Python files only |
 | `rg -n -C 2 error src/` | Line numbers and two lines of context |
 
+### tldr
+
+Short examples for a command. Homebrew’s `tldr` formula is disabled, so the package is `tlrc`; the binary is still `tldr`. The first run downloads the pages. The cache refreshes on its own after two weeks. Several words are joined with hyphens, so `tldr git checkout` is the `git-checkout` page.
+
+| Command | Purpose |
+| --- | --- |
+| `tldr tar` | Examples for `tar` |
+| `tldr -p osx tar` | The macOS page (platform name is `osx`) |
+| `tldr -u` | Refresh the page cache |
+
 ### zoxide
 
 `cd` with a query jumps to the highest-ranked directory you have already visited. A path that exists is used as-is.

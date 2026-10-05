@@ -21,6 +21,8 @@ brews:
   - ripgrep
   - starship
   - tree
+  # The tldr formula is disabled. tlrc is the official client; the command is tldr.
+  - tlrc
   - uv
   - vim
   - wget
