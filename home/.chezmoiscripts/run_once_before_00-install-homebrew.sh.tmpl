@@ -1,6 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 {{ if or (eq .platform "linux") (eq .platform "wsl") }}
+pkg_mgr="{{ template "linux-package-manager.tmpl" . }}"
+if [[ "${pkg_mgr}" == dnf ]]; then
+# https://docs.brew.sh/Homebrew-on-Linux
+sudo /usr/bin/dnf group install -y {{ range .dnfGroups }}{{ . | quote }} {{ end }}
+dnf_packages=(
+{{- range .dnf }}
+  {{ . | quote }}
+{{- end }}
+{{- if and (eq .platform "linux") (not .headless) }}
+{{- range .dnfLinuxDesktop }}
+  {{ . | quote }}
+{{- end }}
+{{- end }}
+)
+sudo /usr/bin/dnf install -y "${dnf_packages[@]}"
+else
 apt_packages=(
 {{- range .apt }}
   {{ . | quote }}
@@ -13,6 +29,7 @@ apt_packages=(
 )
 sudo DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get update
 sudo DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get install -y "${apt_packages[@]}"
+fi
 
 {{ end -}}
 if [[ ! -x "{{ .brewPrefix }}/bin/brew" ]]; then

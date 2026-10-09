@@ -22,11 +22,25 @@ EOF
 {{ range .uvTools -}}
 "{{ $.brewPrefix }}/bin/uv" tool install{{ range .with }} --with {{ . | quote }}{{ end }} {{ .name | quote }}
 {{ end -}}
-{{ if eq .platform "linux" -}}
-# No 1password-cli formula. The cask can install a Linux binary, but it only
-# links op; 1Password's apt package also creates the onepassword-cli group
-# and setgid bit the desktop app integration needs.
+{{ if eq .platform "linux" }}
+pkg_mgr="{{ template "linux-package-manager.tmpl" . }}"
+# No 1password-cli formula. The cask's Linux build only links op. The distro
+# package creates the onepassword-cli group and setgid bit the desktop app
+# integration needs.
 # https://developer.1password.com/docs/cli/get-started/
+if [[ "${pkg_mgr}" == dnf ]]; then
+sudo /usr/bin/rpm --import https://downloads.1password.com/linux/keys/1password.asc
+sudo /usr/bin/tee /etc/yum.repos.d/1password.repo >/dev/null <<'EOF'
+[1password]
+name=1Password Stable Channel
+baseurl=https://downloads.1password.com/linux/rpm/stable/$basearch
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey="https://downloads.1password.com/linux/keys/1password.asc"
+EOF
+sudo /usr/bin/dnf install -y 1password-cli
+else
 sudo DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get update
 sudo DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get install -y gnupg
 sudo /usr/bin/mkdir -p \
@@ -45,4 +59,5 @@ printf 'deb [arch=%s signed-by=/usr/share/keyrings/1password-archive-keyring.gpg
   | sudo /usr/bin/gpg --batch --yes --dearmor --output /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
 sudo DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get update
 sudo DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get install -y 1password-cli
+fi
 {{ end -}}

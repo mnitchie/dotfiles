@@ -36,7 +36,8 @@ uvTools:
       - llm-ollama
 
 # darwin only. There is no 1password-cli formula. The cask's Linux build only
-# links the op binary, so Linux uses 1Password's apt repository (WSL uses op.exe on Windows).
+# links the op binary, so Debian/Ubuntu uses 1Password's apt repository and
+# Fedora uses its rpm repository (WSL uses op.exe on Windows).
 casks:
   - 1password-cli
   - font-jetbrains-mono-nerd-font
@@ -51,6 +52,22 @@ apt:
   - git
   - less
 
-# Non-headless linux only. fontconfig provides fc-cache for the Nerd Font.
+# Non-headless Debian/Ubuntu only. fontconfig provides fc-cache for the Nerd Font.
 aptLinuxDesktop:
+  - fontconfig
+
+# Homebrew's Fedora requirements, plus git and less (used here as the pager).
+# https://docs.brew.sh/Homebrew-on-Linux
+dnfGroups:
+  - development-tools
+
+dnf:
+  - procps-ng
+  - curl
+  - file
+  - git
+  - less
+
+# Non-headless Fedora only. fontconfig provides fc-cache for the Nerd Font.
+dnfLinuxDesktop:
   - fontconfig

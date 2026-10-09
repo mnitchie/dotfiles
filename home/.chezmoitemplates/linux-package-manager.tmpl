@@ -1,0 +1,12 @@
+{{- $id := .chezmoi.osRelease.id -}}
+{{- $like := "" -}}
+{{- if hasKey .chezmoi.osRelease "idLike" -}}
+{{-   $like = .chezmoi.osRelease.idLike -}}
+{{- end -}}
+{{- if eq $id "fedora" -}}
+dnf
+{{- else if or (eq $id "debian") (eq $id "ubuntu") ($like | contains "debian") -}}
+apt
+{{- else -}}
+{{-   fail (printf "unsupported Linux distribution %q" $id) -}}
+{{- end -}}
