@@ -23,7 +23,4 @@ login_shell="${passwd_entry##*:}"
 if [[ "${login_shell}" != "${fish}" ]]; then
   sudo /usr/bin/chsh -s "${fish}" "${user}"
 fi
-if /usr/bin/dpkg -s zsh >/dev/null 2>&1; then
-  sudo DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get remove -y zsh
-fi
 {{ end -}}
