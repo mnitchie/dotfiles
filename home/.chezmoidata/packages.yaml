@@ -35,12 +35,26 @@ uvTools:
     with:
       - llm-ollama
 
-# darwin only. There is no 1password-cli formula. The cask's Linux build only
+# Apple Silicon macOS only. There is no 1password-cli formula. The cask's Linux build only
 # links the op binary, so Debian/Ubuntu uses 1Password's apt repository and
 # Fedora uses its rpm repository (WSL uses op.exe on Windows).
 casks:
   - 1password-cli
   - font-jetbrains-mono-nerd-font
+
+# Intel macOS uses MacPorts instead of Homebrew. brews install under the same
+# port name unless listed in portNames.
+portNames:
+  awscli: py314-awscli2
+
+# `port select` choices that put unversioned commands (aws) on PATH.
+portSelect:
+  - group: awscli
+    port: py314-awscli2
+
+# Intel macOS, in place of casks. The Nerd Font comes from .chezmoiexternal.
+ports:
+  - 1password-cli
 
 # Homebrew's Debian/Ubuntu requirements.
 # https://docs.brew.sh/Homebrew-on-Linux

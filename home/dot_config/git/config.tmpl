@@ -13,10 +13,10 @@
 [credential "https://github.com"]
 	# An empty value resets credential helpers inherited from the system config.
 	helper =
-	helper = {{ printf "!%s/bin/gh auth git-credential" .brewPrefix | quote }}
+	helper = {{ printf "!%s/bin/gh auth git-credential" .packagePrefix | quote }}
 [credential "https://gist.github.com"]
 	helper =
-	helper = {{ printf "!%s/bin/gh auth git-credential" .brewPrefix | quote }}
+	helper = {{ printf "!%s/bin/gh auth git-credential" .packagePrefix | quote }}
 [gpg]
 	format = ssh
 {{ if $program -}}

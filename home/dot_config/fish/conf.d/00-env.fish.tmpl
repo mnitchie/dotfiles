@@ -26,7 +26,7 @@ for dir in $XDG_STATE_HOME/python $XDG_STATE_HOME/less $XDG_STATE_HOME/psql $XDG
     or mkdir -p -- $dir
 end
 
-set -l brew_prefix "{{ .brewPrefix }}"
+set -l pkg_prefix "{{ .packagePrefix }}"
 
 if status is-login
     # Fish does not read /etc/zprofile; load macOS system paths here.
@@ -39,27 +39,29 @@ if status is-login
         end
     end
 
-    fish_add_path --path --move "$HOME/.local/bin" $brew_prefix/bin $brew_prefix/sbin
+    fish_add_path --path --move "$HOME/.local/bin" $pkg_prefix/bin $pkg_prefix/sbin
 end
 
-if test -d $brew_prefix
-    set -gx HOMEBREW_PREFIX $brew_prefix
-    set -gx HOMEBREW_CELLAR $brew_prefix/Cellar
+if test -d $pkg_prefix
+{{- if eq .packageManager "homebrew" }}
+    set -gx HOMEBREW_PREFIX $pkg_prefix
+    set -gx HOMEBREW_CELLAR $pkg_prefix/Cellar
 {{- if eq .platform "darwin" }}
-    set -gx HOMEBREW_REPOSITORY $brew_prefix
+    set -gx HOMEBREW_REPOSITORY $pkg_prefix
 {{- else }}
-    set -gx HOMEBREW_REPOSITORY $brew_prefix/Homebrew
+    set -gx HOMEBREW_REPOSITORY $pkg_prefix/Homebrew
+{{- end }}
 {{- end }}
     # A leading colon preserves the default man search path.
     if set -q MANPATH[1]
         set -gx MANPATH '' (string match -v -- '' $MANPATH)
     end
-    set -l brew_info $brew_prefix/share/info
-    if not string match -q -- "$brew_info*" -- "$INFOPATH"
+    set -l pkg_info $pkg_prefix/share/info
+    if not string match -q -- "$pkg_info*" -- "$INFOPATH"
         if test -n "$INFOPATH"
-            set -gx INFOPATH "$brew_info:$INFOPATH"
+            set -gx INFOPATH "$pkg_info:$INFOPATH"
         else
-            set -gx INFOPATH "$brew_info:"
+            set -gx INFOPATH "$pkg_info:"
         end
     end
 end

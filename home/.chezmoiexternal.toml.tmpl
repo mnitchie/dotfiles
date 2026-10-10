@@ -41,3 +41,11 @@ exact = true
 include = ["*.ttf", "LICENSE*", "LICENSE", "OFL.txt"]
 checksum.sha256 = {{ .jetbrainsMonoNerdFont.sha256 | quote }}
 {{- end -}}
+{{- if eq .packageManager "macports" }}
+{{/* Not exact: ~/Library/Fonts holds other fonts. The archive's files sit at its root. */}}
+["Library/Fonts"]
+type = "archive"
+url = {{ .jetbrainsMonoNerdFont.url | quote }}
+include = ["JetBrainsMonoNerdFont*.ttf"]
+checksum.sha256 = {{ .jetbrainsMonoNerdFont.sha256 | quote }}
+{{- end -}}
