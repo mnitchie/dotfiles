@@ -5,18 +5,23 @@ set -euo pipefail
 # MacPorts needs Command Line Tools even for binary archives. Like Homebrew's
 # installer, find them through softwareupdate instead of the xcode-select GUI.
 if ! /usr/bin/xcode-select -p >/dev/null 2>&1; then
+  # softwareupdate only offers the Command Line Tools while this placeholder
+  # exists, for both -l and -i, so keep it until the install has finished.
   placeholder=/tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
   /usr/bin/touch "${placeholder}"
   label="$(/usr/sbin/softwareupdate -l 2>/dev/null \
     | /usr/bin/sed -n 's/^[[:space:]]*\* Label: \(Command Line Tools.*\)$/\1/p' \
     | /usr/bin/sort -V | /usr/bin/tail -n 1)"
+  if [[ -n "${label}" ]]; then
+    sudo /usr/sbin/softwareupdate -i "${label}" || true
+  fi
   /bin/rm -f "${placeholder}"
-  if [[ -z "${label}" ]]; then
+  # softwareupdate can exit 0 without installing anything, so check the result.
+  if [[ ! -x /Library/Developer/CommandLineTools/usr/bin/git ]]; then
     /usr/bin/xcode-select --install || true
     printf 'Finish installing Command Line Tools, then run chezmoi apply again\n' >&2
     exit 1
   fi
-  sudo /usr/sbin/softwareupdate -i "${label}"
   sudo /usr/bin/xcode-select --switch /Library/Developer/CommandLineTools
 fi
 
