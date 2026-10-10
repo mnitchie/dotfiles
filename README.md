@@ -1,106 +1,96 @@
 # Dotfiles
 
-Personal dotfiles managed with [chezmoi](https://www.chezmoi.io/). `chezmoi init --apply` installs Homebrew (MacPorts on Intel Macs), CLI tools, and configuration under `$HOME`. Supports macOS (Apple Silicon, or Intel on Sequoia 15 or Tahoe 26), Debian/Ubuntu and Fedora Linux (desktop or headless), and WSL.
+Personal dotfiles managed with [chezmoi](https://www.chezmoi.io/). One command installs a package manager, CLI tools, fish, and config.
 
-## New machine
+| Platform | Packages | fish |
+| --- | --- | --- |
+| macOS, Apple Silicon | Homebrew | `/opt/homebrew/bin/fish` |
+| macOS, Intel (Sequoia 15, Tahoe 26) | MacPorts | `/opt/local/bin/fish` |
+| Debian/Ubuntu, Fedora (desktop or headless) | apt or dnf, then Homebrew | `/home/linuxbrew/.linuxbrew/bin/fish` |
+| WSL (Debian-family) | apt, then Homebrew | `/home/linuxbrew/.linuxbrew/bin/fish` |
 
-For work secrets, set up 1Password first. Leave the work account prompt blank to skip them. Templates render before install scripts: if the CLI is missing, the first apply skips secrets. Apply again after installing and signing in to the CLI.
+## Install
 
-| Platform | 1Password before the apply that reads secrets |
+**1. Set up 1Password** (skip if you won't use work secrets):
+
+| Platform | Before installing |
 | --- | --- |
-| macOS, Linux desktop | Desktop app installed and signed in; **Integrate with 1Password CLI** and the SSH agent enabled in the app. Homebrew (Apple Silicon), MacPorts (Intel macOS), apt (Debian/Ubuntu), or dnf (Fedora) installs the CLI |
-| Headless Linux | If you will enter a work account at init, run [`op account add`](https://developer.1password.com/docs/cli/get-started/) before the apply that reads secrets. The first apply installs the CLI when it is missing; add the account after that, then apply again. Otherwise leave the prompt blank |
-| WSL | [1Password CLI on Windows](https://developer.1password.com/docs/cli/get-started/) (e.g. `winget install AgileBits.1Password.CLI`); enable CLI integration in the Windows 1Password app (chezmoi uses `op.exe`, not Linux `op`, and does not install it) |
+| macOS, Linux desktop | Install the [desktop app](https://1password.com/), sign in, and enable **Integrate with 1Password CLI** and the SSH agent. The CLI is installed for you |
+| Headless Linux | After the first apply installs `op`, run [`op account add`](https://developer.1password.com/docs/cli/get-started/), then apply again |
+| WSL | On Windows: `winget install AgileBits.1Password.CLI` and enable CLI integration in the app. chezmoi uses `op.exe` |
+
+**2. Run:**
 
 ```bash
 sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin" -- --use-builtin-git=true init --apply mnitchie
 ```
 
-This installs `chezmoi` in `~/.local/bin` and clones [mnitchie/dotfiles](https://github.com/mnitchie/dotfiles). Update chezmoi with `chezmoi upgrade`. Built-in Git allows cloning before macOS Command Line Tools are installed. Add `--branch <name>` after `init` to test a branch.
+Add `--branch <name>` after `init` to test a branch. Expect sudo prompts, and on macOS a Command Line Tools install.
 
-`chezmoi init` uses `home/.chezmoi.toml.tmpl` to ask these questions once. Answer boolean prompts with **y** or **n**:
+**3. Answer the prompts** (asked once, answer **y**/**n**):
 
-| Prompt | When | Notes |
+| Prompt | Asked | Notes |
 | --- | --- | --- |
 | Work machine | always | |
-| Work email | if work | |
-| Work 1Password account sign-in address (blank to skip work secrets) | if work | Example: `employee.1password.com` |
-| Headless Linux (no 1Password app) | Linux only, including Fedora | **n** on a desktop, including Fedora Workstation. **y** disables git commit signing and the 1Password SSH agent |
-| Windows user folder name | WSL only | Folder name under `C:\Users\` (spaces allowed) |
+| Work email | work | |
+| Work 1Password account sign-in address | work | e.g. `employee.1password.com`. Blank skips work secrets |
+| Headless Linux (no 1Password app) | Linux | **y** disables commit signing and the 1Password SSH agent |
+| Windows user folder name | WSL | Folder under `C:\Users\` |
 
-Install the [1Password desktop app](https://1password.com/) separately on macOS; Git signing and SSH use it. Homebrew or MacPorts installs only the CLI. Bootstrap may prompt for sudo and, on macOS, Command Line Tools.
+If `op` wasn't installed yet, secrets are skipped on the first run. Run `chezmoi apply` again after signing in.
 
 ## Daily use
 
-Edit sources under `home/`. `chezmoi edit` accepts destination paths, such as `~/.config/fish/config.fish`. See [daily operations](https://www.chezmoi.io/user-guide/daily-operations/).
-
 | Command | Purpose |
 | --- | --- |
-| `chezmoi edit <target>` | Edit source for a destination file |
+| `chezmoi edit <target>` | Edit the source of a file, e.g. `~/.config/fish/config.fish` |
 | `chezmoi diff` | Show pending changes |
-| `chezmoi apply` | Apply the source state to `$HOME` |
-| `chezmoi update` | Pull the source repo and apply |
-| `chezmoi re-add` | Copy non-template files you changed under `$HOME` back into the source |
-| `chezmoi cd` | Shell in the source directory |
+| `chezmoi apply` | Apply the source to `$HOME` |
+| `chezmoi update` | Pull this repo and apply |
+| `chezmoi re-add` | Copy changes to plain (non-template) files back into the source |
+| `chezmoi cd` | Shell in the source directory (`home/` is the source root) |
+| `chezmoi update --init` | Regenerate config after the prompts change (fixes `map has no entry for key`) |
+| `chezmoi update --refresh-externals` | Re-download externals now instead of weekly |
+| `editf` | Edit and apply `config.fish` |
+| `reloadf` | `exec fish` |
 
-Use `chezmoi re-add` for plain files and `chezmoi edit` for templates. Do not add `~/.config/fish/fish_variables`; fish manages it.
+Use `re-add` for plain files and `edit` for `.tmpl` files. Don't add `~/.config/fish/fish_variables`.
 
-**`editf`** → `chezmoi edit --apply ~/.config/fish/config.fish`; **`reloadf`** → `exec fish`.
+## Packages
 
-`.chezmoiroot` sets `home/` as the source root.
+Edit `home/.chezmoidata/packages.yaml`, then `chezmoi apply`.
 
-## Fish
+| Key | Installs on |
+| --- | --- |
+| `brews` | Everywhere (`brew`, or `port` on Intel macOS) |
+| `casks` | Apple Silicon macOS |
+| `ports` | Intel macOS, in place of casks |
+| `portNames` | Intel macOS: port name when it differs from the brew (`awscli: py314-awscli2`). Look up names at [ports.macports.org](https://ports.macports.org/) |
+| `portSelect` | Intel macOS: `port select --set` for versioned commands (`aws`) |
+| `apt`, `aptLinuxDesktop` | Debian/Ubuntu/WSL, before Homebrew. `LinuxDesktop` skips headless |
+| `dnf`, `dnfGroups`, `dnfLinuxDesktop` | Fedora, before Homebrew |
+| `uvTools` | `uv tool install`, with optional `with` plugins (`llm` + `llm-ollama`) |
 
-Bootstrap registers the package manager’s fish in `/etc/shells` and sets it as the login shell (`dscl` on macOS, `chsh` on Linux/WSL). It uses `/opt/homebrew/bin/fish` on Apple Silicon, `/opt/local/bin/fish` on Intel macOS, and `/home/linuxbrew/.linuxbrew/bin/fish` on Linux/WSL.
+Other Linux distributions stop with an error.
 
-Login shells prepend `~/.local/bin` and the package manager’s `bin` and `sbin` to `PATH`. macOS system paths come from `path_helper`, since fish does not read `/etc/zprofile`. Non-login shells inherit PATH; fnm adds its Node.js directory during interactive startup. `reloadf` starts a non-login shell.
+### Intel Macs
 
-All shells set XDG directories, tool environment variables, and history paths. Interactive shells load Starship, zoxide (`cd`), fnm, fzf, and uv/op completions. Fish provides syntax highlighting and autosuggestions.
+Homebrew [no longer builds Intel packages](https://docs.brew.sh/Support-Tiers#future-macos-support) and stops running on Intel in September 2027, so Intel Macs get MacPorts in `/opt/local`. It's picked automatically.
 
-Plain `history` and fzf’s `Ctrl-R` view show readable dates and times.
-
-Fish loads `conf.d/*.fish` before `config.fish`. Interactive shells source unmanaged `~/.config/fish/local.fish` last.
-
-## Add a Homebrew package
-
-Run `chezmoi cd`, then edit `home/.chezmoidata/packages.yaml`:
-
-- **`brews`** — all platforms (`brew bundle` in `run_onchange_before_10-install-packages.sh.tmpl`; `port install` on Intel macOS)
-- **`casks`** — Apple Silicon macOS only (e.g. `font-jetbrains-mono-nerd-font`, `1password-cli`)
-- **`portNames`** — Intel macOS port names for `brews` whose port is named differently (`awscli` is `py314-awscli2`). Check names at [ports.macports.org](https://ports.macports.org/)
-- **`portSelect`** — `port select --set` choices for ports that install versioned commands (`aws`)
-- **`ports`** — Intel macOS, in place of `casks` (`1password-cli`)
-- **`apt`** — Debian/Ubuntu packages before Homebrew on Linux and WSL
-- **`aptLinuxDesktop`** — non-headless Debian/Ubuntu only (e.g. `fontconfig`)
-- **`dnfGroups`** and **`dnf`** — Fedora packages before Homebrew. `dnfGroups` entries are `dnf group install` groups (Homebrew’s `development-tools`)
-- **`dnfLinuxDesktop`** — non-headless Fedora only (e.g. `fontconfig`)
-- **`uvTools`** — `uv tool install` after Homebrew. `with` packages install into that tool (`llm` with `llm-ollama`). Homebrew’s `llm` formula is not used
-
-Debian-family Linux (`ID` of `debian` or `ubuntu`, or `ID_LIKE` containing `debian`) uses apt. Fedora (`ID=fedora`) uses dnf. Other distributions stop during apply. WSL keeps using apt when its `/etc/os-release` is Debian-family, and still uses Windows `op.exe`.
-
-Run `chezmoi apply` so the package script re-runs.
-
-## Intel Macs
-
-Homebrew treats Intel macOS as unsupported (Tier 3): it builds no new Intel bottles and plans to stop running on Intel Macs in September 2027 ([support tiers](https://docs.brew.sh/Support-Tiers#future-macos-support)). Intel Macs use [MacPorts](https://www.macports.org/) in `/opt/local` instead. chezmoi picks it from the CPU architecture; there is no prompt.
-
-The first apply installs Command Line Tools through `softwareupdate`, then the MacPorts installer pinned in `home/.chezmoidata/macports.yaml` (checksum-verified). Only macOS versions listed there are supported (Sequoia 15 and Tahoe 26). After that, the package script runs `port selfupdate`, and `sudo port selfupdate && sudo port upgrade outdated` updates everything. Ports without a prebuilt binary for your macOS build from source, which can take a while.
-
-The Nerd Font is downloaded into `~/Library/Fonts` (see Externals). Older font versions are not removed when the pin changes.
+- The installer is pinned and checksummed in `home/.chezmoidata/macports.yaml`. Add an entry there for a new macOS version.
+- Ports without a prebuilt binary compile from source, so the first install can be slow.
+- Update everything with `sudo port selfupdate && sudo port upgrade outdated`.
 
 ## CLI tools
 
-Interactive fish uses `bat --paging=never` for `cat`, `eza --icons=always --total-size` for `ls`, and zoxide for `cd`. fzf key bindings load when stdin is a terminal. `df`, `du`, `find`, and `grep` suggest `duf`, `dust`, `fd`, and `rg` on stderr.
-
-`fd` includes hidden files by default and prints a reminder on stderr to add
-`--no-ignore` when you also want files excluded by ignore rules.
+In interactive fish, `cat` is `bat`, `ls` is `eza`, and `cd` is zoxide. `df`, `du`, `find`, and `grep` suggest `duf`, `dust`, `fd`, and `rg`. Starship, fzf, fnm, and uv/op completions load automatically. `history` shows timestamps.
 
 ### bat
 
 | Command | Purpose |
 | --- | --- |
 | `bat README.md` | Syntax highlighting and line numbers |
-| `bat -r 40:80 file.py` | Print only lines 40–80 |
+| `bat -r 40:80 file.py` | Lines 40–80 only |
 | `bat --diff file.py` | Lines that differ from the Git index |
 
 ### duf
@@ -109,13 +99,13 @@ Interactive fish uses `bat --paging=never` for `cat`, `eza --icons=always --tota
 | --- | --- |
 | `duf` | Free space on mounted filesystems |
 | `duf -only local` | Local disks only |
-| `duf /` | The filesystem that holds `/` |
+| `duf /` | The filesystem holding `/` |
 
 ### dust
 
 | Command | Purpose |
 | --- | --- |
-| `dust` | Disk used in the current directory, largest first |
+| `dust` | Disk use in the current directory, largest first |
 | `dust -d 1 ~` | One level under home |
 | `dust -n 20` | The 20 largest entries |
 
@@ -123,23 +113,31 @@ Interactive fish uses `bat --paging=never` for `cat`, `eza --icons=always --tota
 
 | Command | Purpose |
 | --- | --- |
-| `ls -la` | Long listing (`ls` is already eza) |
+| `ls -la` | Long listing |
 | `eza -lh --git` | Human sizes and git status |
 | `eza --tree -L 2` | Two-level tree |
 
-### fzf
+### fd
+
+Includes hidden files. Add `--no-ignore` to also search gitignored files.
 
 | Command | Purpose |
 | --- | --- |
-| `Ctrl-R` | Fuzzy-search history and paste the line |
-| `Ctrl-T` | Fuzzy-find files and paste their paths |
-| `Alt-C` | Fuzzy-find a directory and `cd` into it |
+| `fd config` | Paths matching `config` |
+| `fd -e md` | Markdown files |
+| `fd -t d src` | Directories only |
 
-On macOS, Option has to send Esc for `Alt-C` (iTerm2: Profiles → Keys → Left Option key → Esc+).
+### fzf
 
-### ripgrep
+| Key | Purpose |
+| --- | --- |
+| `Ctrl-R` | Search history |
+| `Ctrl-T` | Find files and paste their paths |
+| `Alt-C` | Find a directory and `cd` into it (macOS: set Option to send Esc+) |
 
-The binary is `rg`. Searches skip hidden files, binaries, and anything in `.gitignore`.
+### ripgrep (`rg`)
+
+Skips hidden files, binaries, and gitignored files.
 
 | Command | Purpose |
 | --- | --- |
@@ -149,152 +147,106 @@ The binary is `rg`. Searches skip hidden files, binaries, and anything in `.giti
 
 ### tldr
 
-Command examples, provided by `tlrc` as `tldr`. Pages download on first use and refresh automatically. Use `tldr git checkout` for the `git-checkout` page.
-
 | Command | Purpose |
 | --- | --- |
 | `tldr tar` | Examples for `tar` |
-| `tldr -p osx tar` | The macOS page (platform name is `osx`) |
+| `tldr git checkout` | Subcommand page |
+| `tldr -p osx tar` | The macOS page |
 | `tldr -u` | Refresh the page cache |
 
 ### llm
 
-Installed at `~/.local/bin/llm` with `uv tool install --with llm-ollama`. `uv tool upgrade llm` preserves the plugin. Run Ollama to list its models.
+Installed with uv; `uv tool upgrade llm` keeps the Ollama plugin.
 
 | Command | Purpose |
 | --- | --- |
-| `llm models` | List available models |
-| `llm 'Hello'` | Send a prompt to the default model |
+| `llm models` | List models (Ollama must be running for local ones) |
+| `llm 'Hello'` | Prompt the default model |
 | `llm keys set openai` | Store an API key |
 
 ### zoxide
 
-`cd` with a query jumps to the highest-ranked directory you have already visited. A path that exists is used as-is.
-
 | Command | Purpose |
 | --- | --- |
-| `cd proj` | Best match for `proj` |
-| `cd api rust` | Match on several words |
+| `cd proj` | Best-ranked match for `proj` (existing paths work as usual) |
+| `cd api rust` | Match several words |
 | `cdi` | Pick from the ranked list with fzf |
 
-## Add a file on one platform only
+## Customizing
 
-Add a template under `home/` whose **entire body** is inside `{{- if ... -}}` … `{{- end -}}` (no stray newlines outside the trim markers). Example: `conf.d/20-darwin.fish.tmpl` uses `{{- if eq .platform "darwin" -}}`.
+### Local overrides (not managed)
 
-Templates use these data keys:
-
-From `home/.chezmoi.toml.tmpl`, written to `~/.config/chezmoi/chezmoi.toml` at `chezmoi init`:
-
-| Key | Meaning |
+| File | Purpose |
 | --- | --- |
-| `platform` | `darwin`, `linux`, or `wsl` |
-| `packageManager` | `homebrew`, or `macports` on Intel macOS |
-| `packagePrefix` | Package manager prefix (`/opt/homebrew`, `/opt/local`, or `/home/linuxbrew/.linuxbrew`) |
-| `headless` | Linux without 1Password desktop app |
-| `work` | Work machine |
-| `workEmail` | Git email for work repos |
-| `opWorkAccount` | Work 1Password account sign-in address (if work; blank skips work secrets) |
-| `windowsUser` | `C:\Users\<name>` folder name (WSL) |
-
-From `home/.chezmoidata/`, updated on `chezmoi apply` and `chezmoi update`:
-
-| Key | File | Meaning |
-| --- | --- | --- |
-| `name`, `email` | `identity.yaml` | Personal git identity |
-| `signingKey`, `workSigningKey` | `identity.yaml` | SSH signing public keys |
-| `jetbrainsMonoNerdFont` | `fonts.yaml` | Linux desktop and Intel macOS Nerd Font URL and checksum |
-| `macports` | `macports.yaml` | Pinned MacPorts installer version and per-macOS checksums |
-
-Older chezmoi configs may override identity data or lack newer keys (configs with `brewPrefix` predate `packagePrefix`, and apply fails with `map has no entry for key`). Run `chezmoi update --init` to regenerate the config while keeping stored prompt answers.
-
-Skip a whole directory on some machines by listing it in `home/.chezmoiignore` (patterns are templates even without `.tmpl`). Keep a single file's platform differences inside an `{{- if -}}` body so an empty render removes the file.
-
-## Work config
-
-When **Work machine** is true, apply produces:
-
-- `~/.config/fish/conf.d/work.fish` (from `home/dot_config/fish/conf.d/work.fish.tmpl`)
-- `~/.config/fish/conf.d/work-secrets.fish` (from `private_work-secrets.fish.tmpl`, when `opWorkAccount` is set and `op` is already installed)
-- `~/.config/git/work`
-- `[includeIf "gitdir:~/git/strata/"]` → `work` in git config
-
-When a job ends, set `work = false` in `~/.config/chezmoi/chezmoi.toml` and apply. Work templates render empty, removing their destination files.
-
-## Secrets and local overrides
-
-Nothing secret is committed. Templates may use `onepasswordRead` for 1Password values.
-
-Cursor's global MCP config is managed at `~/.cursor/mcp.json` by `home/dot_cursor/private_mcp.json`. It includes Stitch, draw.io, and Terraform (requires Docker, with operations disabled). Stitch always references `${env:GOOGLE_STITCH_API_KEY}`; Cursor must inherit that variable from its environment. The installed file has mode 0600 (owner read/write only). Edit the source JSON rather than the installed copy; Cursor does not document `~/.agents/mcp.json` as a configuration location.
-
-### Work secrets
-
-With `work = true`, `opWorkAccount` set, and the CLI installed, apply reads these items from the work account’s **Private** vault. Item titles and field labels must be unique. Any item type can hold the fields.
-
-| Item | Field labels |
-| --- | --- |
-| **Gemfury** | `credential` |
-| **Cloudflare** | `credential` |
-| **Google Stitch** | `credential` |
-
-The template creates `~/.config/fish/conf.d/work-secrets.fish` with mode 0600 and exports `FURY_AUTH`, `UV_INDEX_GEMFURY_USERNAME`, `UV_INDEX_GEMFURY_PASSWORD` (`NOPASS`), `CLOUDFLARE_API_TOKEN`, and `GOOGLE_STITCH_API_KEY`. Chezmoi authenticates through the desktop app, or `op signin` on headless Linux. WSL uses `op.exe`.
-
-Not managed by chezmoi — create on the machine:
-
-| File | Role |
-| --- | --- |
-| `~/.config/fish/local.fish` | Extra fish (sourced last, interactive) |
+| `~/.config/fish/local.fish` | Extra fish config, sourced last |
 | `~/.config/git/local` | Git overrides |
-| `~/.ssh/config.local` | SSH overrides on macOS / Linux desktop |
+| `~/.ssh/config.local` | SSH overrides (macOS, Linux desktop) |
 
-On **WSL**, `ssh` and git use Windows `ssh.exe`. Linux `~/.ssh/config` and `config.local` are **not** read. Put SSH **host** entries in `%USERPROFILE%\.ssh\config` on Windows.
+On WSL, git and `ssh` use Windows `ssh.exe`, so put SSH hosts in `%USERPROFILE%\.ssh\config`.
 
-## Terminal font (JetBrainsMono Nerd Font)
+### Platform-only files
 
-Starship needs a [Nerd Font](https://www.nerdfonts.com/). Use **JetBrainsMono Nerd Font** in the terminal you type into.
+Wrap the **entire** template body in a condition. An empty render removes the file:
 
-| Platform | Install | Set in terminal |
+```
+{{- if eq .platform "darwin" -}}
+...
+{{- end -}}
+```
+
+To skip a whole directory, list it in `home/.chezmoiignore`.
+
+### Template data
+
+| Key | Source | Value |
 | --- | --- | --- |
-| macOS (Apple Silicon) | Cask `font-jetbrains-mono-nerd-font` | Terminal.app, iTerm2, etc. |
-| macOS (Intel) | `~/Library/Fonts` via `.chezmoiexternal.toml.tmpl` (pin in `.chezmoidata/fonts.yaml`) | Terminal.app, iTerm2, etc. |
-| Linux desktop | `~/.local/share/fonts/JetBrainsMonoNerdFont` via `.chezmoiexternal.toml.tmpl` (pin in `.chezmoidata/fonts.yaml`) | Desktop terminal |
-| WSL | Windows: `winget install --id DEVCOM.JetBrainsMonoNerdFont` or [nerdfonts.com](https://www.nerdfonts.com/) | Windows Terminal → Font |
-| Linux server | — | Font on the SSH client machine |
+| `platform` | prompts | `darwin`, `linux`, or `wsl` |
+| `packageManager` | prompts | `homebrew` or `macports` |
+| `packagePrefix` | prompts | `/opt/homebrew`, `/opt/local`, or `/home/linuxbrew/.linuxbrew` |
+| `headless`, `work`, `workEmail`, `opWorkAccount`, `windowsUser` | prompts | Your answers |
+| `name`, `email`, `signingKey`, `workSigningKey` | `.chezmoidata/identity.yaml` | Git identity and SSH signing keys |
+| `jetbrainsMonoNerdFont` | `.chezmoidata/fonts.yaml` | Pinned font URL and checksum |
+| `macports` | `.chezmoidata/macports.yaml` | Pinned MacPorts installer |
 
-## Externals
+"Prompts" values live in `~/.config/chezmoi/chezmoi.toml`, generated from `home/.chezmoi.toml.tmpl`.
 
-`home/.chezmoiexternal.toml.tmpl` fetches at apply time:
+## Work machines
 
-- Third-party skills in `~/.agents/skills/`: `gh-stack`,
-  `ponytail`, `pr-lens`, and `i-have-adhd`
-- Linux desktop and Intel macOS Nerd Font, pinned in `home/.chezmoidata/fonts.yaml`
+With **Work machine** set, apply adds `~/.config/fish/conf.d/work.fish`, `~/.config/git/work`, and git `includeIf` for `~/git/strata/`. To turn it off, set `work = false` in `~/.config/chezmoi/chezmoi.toml` and apply.
 
-## Cursor CLI
+Work secrets are read from the work account's **Private** vault into `~/.config/fish/conf.d/work-secrets.fish` (mode 0600):
 
-Fish sets `CURSOR_CONFIG_DIR` to `$XDG_CONFIG_HOME/cursor`, so the CLI reads
-`~/.config/cursor/cli-config.json` on macOS and Linux/WSL. Preferences are merged
-by `home/dot_config/cursor/modify_private_cli-config.json`; edit that source,
-then apply. The installed file has mode 0600. Login data, model selections, and
-CLI caches remain local and are preserved by the merge.
+| 1Password item (field `credential`) | Exported as |
+| --- | --- |
+| Gemfury | `FURY_AUTH`, `UV_INDEX_GEMFURY_USERNAME` (`UV_INDEX_GEMFURY_PASSWORD=NOPASS`) |
+| Cloudflare | `CLOUDFLARE_API_TOKEN` |
+| Google Stitch | `GOOGLE_STITCH_API_KEY` |
 
-## User skills
+Nothing secret is committed.
 
-`~/.agents/skills/` is the shared user-level skills directory. Use the plural
-`.agents`; clients do not discover `~/.config/agents/` by default. Cursor-managed
-built-ins and plugin caches remain owned by their clients.
+## Terminal font
 
-Third-party skills are declared in `home/.chezmoiexternal.toml.tmpl`, with a
-one-week (`168h`) download refresh period. `simplify` is tracked under
-`home/dot_agents/skills/`; edit that source, then apply. Install Stitch plugins
-through Cursor's marketplace; chezmoi does not manage their skills or caches.
+Starship needs **JetBrainsMono Nerd Font** in your terminal.
 
-`chezmoi update` pulls this dotfiles repository and applies it. Changing an
-external URL downloads the new source. Externals using a moving branch URL
-refresh on apply once their cached download is at least a week old; use
-`chezmoi update --refresh-externals` to force a download sooner. A pinned release
-or commit stays at that version until its URL and checksum are changed.
+| Platform | Installed by |
+| --- | --- |
+| macOS, Apple Silicon | Homebrew cask |
+| macOS Intel, Linux desktop | chezmoi external (pinned in `.chezmoidata/fonts.yaml`) |
+| WSL | You: `winget install --id DEVCOM.JetBrainsMonoNerdFont`, then set it in Windows Terminal |
+| Linux server | Set it on the SSH client |
 
-Keep each user skill installed in one place.
+## Cursor and agent skills
+
+| What | Source |
+| --- | --- |
+| Editor settings and keybindings (Cursor, VS Code, macOS) | `home/private_Library/` |
+| MCP servers (`~/.cursor/mcp.json`: Stitch, draw.io, Terraform via Docker) | `home/dot_cursor/private_mcp.json` |
+| Cursor CLI preferences (merged; login and model choices stay local) | `home/dot_config/cursor/modify_private_cli-config.json` |
+| `simplify` skill | `home/dot_agents/skills/` |
+| Third-party skills (`gh-stack`, `ponytail`, `pr-lens`, `i-have-adhd`) | `home/.chezmoiexternal.toml.tmpl`, refreshed weekly |
+
+Skills install to `~/.agents/skills/` (plural `.agents`). Stitch's MCP entry reads `GOOGLE_STITCH_API_KEY` from Cursor's environment.
 
 ## CI
 
-[Bootstrap CI](.github/workflows/bootstrap.yml) runs on pull requests and pushes to `main`, on Ubuntu, Apple Silicon macOS, and Intel macOS (MacPorts). It installs the branch with non-interactive answers, checks apply idempotence, and smoke-tests fish, CLI tools, and the Git pager.
+[Bootstrap CI](.github/workflows/bootstrap.yml) installs each PR on Ubuntu, Apple Silicon macOS, and Intel macOS. It then checks that a second apply changes nothing, and smoke-tests fish and the tools.
