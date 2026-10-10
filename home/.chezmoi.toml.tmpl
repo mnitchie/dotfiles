@@ -1,14 +1,20 @@
 {{- $platform := "" -}}
-{{- $brewPrefix := "" -}}
+{{- $packageManager := "homebrew" -}}
+{{- $packagePrefix := "" -}}
 {{- if eq .chezmoi.os "darwin" -}}
-{{-   if ne .chezmoi.arch "arm64" -}}
-{{-     fail "Apple Silicon (arm64) is required; this Mac is not supported" -}}
-{{-   end -}}
 {{-   $platform = "darwin" -}}
-{{-   $brewPrefix = "/opt/homebrew" -}}
+{{-   if eq .chezmoi.arch "arm64" -}}
+{{-     $packagePrefix = "/opt/homebrew" -}}
+{{-   else if eq .chezmoi.arch "amd64" -}}
+{{/* Homebrew builds no Intel bottles and stops running on Intel Macs in September 2027. */}}
+{{-     $packageManager = "macports" -}}
+{{-     $packagePrefix = "/opt/local" -}}
+{{-   else -}}
+{{-     fail (printf "unsupported Mac architecture %q" .chezmoi.arch) -}}
+{{-   end -}}
 {{- else if eq .chezmoi.os "linux" -}}
 {{-   $platform = "linux" -}}
-{{-   $brewPrefix = "/home/linuxbrew/.linuxbrew" -}}
+{{-   $packagePrefix = "/home/linuxbrew/.linuxbrew" -}}
 {{/* .chezmoi.kernel is Linux-only and may be absent on darwin. */}}
 {{-   if hasKey .chezmoi "kernel" -}}
 {{-     if hasKey .chezmoi.kernel "osrelease" -}}
@@ -37,7 +43,8 @@
 {{- end -}}
 [data]
 platform = {{ $platform | quote }}
-brewPrefix = {{ $brewPrefix | quote }}
+packageManager = {{ $packageManager | quote }}
+packagePrefix = {{ $packagePrefix | quote }}
 headless = {{ $headless }}
 work = {{ $work }}
 workEmail = {{ $workEmail | quote }}
@@ -46,7 +53,7 @@ windowsUser = {{ $windowsUser | quote }}
 {{- if eq $platform "darwin" }}
 
 [onepassword]
-command = "/opt/homebrew/bin/op"
+command = {{ printf "%s/bin/op" $packagePrefix | quote }}
 {{- else if eq $platform "wsl" }}
 
 [onepassword]

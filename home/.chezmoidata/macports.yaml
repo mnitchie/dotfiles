@@ -1,0 +1,11 @@
+# Installer for Intel macOS. port selfupdate keeps MacPorts current after the first install.
+# Checksums: https://github.com/macports/macports-base/releases/download/v<version>/MacPorts-<version>.chk.txt
+macports:
+  version: 2.12.6
+  installers:
+    "15":
+      name: Sequoia
+      sha256: 2d6d58ff3ff60e70f8dc05cb2df9df3137e3d7c0c6d6f6236d68c8ba03343e34
+    "26":
+      name: Tahoe
+      sha256: ddd90723ba470a688296bb520335e1c7c08835d82df4141e6807b411bc8b78e8

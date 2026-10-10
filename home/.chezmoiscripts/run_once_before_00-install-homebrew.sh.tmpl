@@ -1,3 +1,4 @@
+{{ if eq .packageManager "homebrew" -}}
 #!/usr/bin/env bash
 set -euo pipefail
 {{ if or (eq .platform "linux") (eq .platform "wsl") -}}
@@ -38,7 +39,7 @@ sudo DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get install -y "${apt_packages[
 {{-     fail (printf "unsupported Linux distribution %q" $id) -}}
 {{   end }}
 {{ end }}
-if [[ ! -x "{{ .brewPrefix }}/bin/brew" ]]; then
+if [[ ! -x "{{ .packagePrefix }}/bin/brew" ]]; then
   # bash -c "$(curl ...)" exits 0 when curl fails, and chezmoi would record this run_once script as done.
   installer="$(/usr/bin/mktemp)"
   trap '/bin/rm -f "$installer"' EXIT
@@ -51,3 +52,4 @@ if [[ ! -x "{{ .brewPrefix }}/bin/brew" ]]; then
     /bin/bash "${installer}"
   fi
 fi
+{{ end -}}

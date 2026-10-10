@@ -1,6 +1,6 @@
 # Dotfiles
 
-Personal dotfiles managed with [chezmoi](https://www.chezmoi.io/). `chezmoi init --apply` installs Homebrew, CLI tools, and configuration under `$HOME`. Supports Apple Silicon macOS, Debian/Ubuntu and Fedora Linux (desktop or headless), and WSL. Intel Macs are not supported.
+Personal dotfiles managed with [chezmoi](https://www.chezmoi.io/). `chezmoi init --apply` installs Homebrew (MacPorts on Intel Macs), CLI tools, and configuration under `$HOME`. Supports macOS (Apple Silicon, or Intel on Sequoia 15 or Tahoe 26), Debian/Ubuntu and Fedora Linux (desktop or headless), and WSL.
 
 ## New machine
 
@@ -8,7 +8,7 @@ For work secrets, set up 1Password first. Leave the work account prompt blank to
 
 | Platform | 1Password before the apply that reads secrets |
 | --- | --- |
-| macOS, Linux desktop | Desktop app installed and signed in; **Integrate with 1Password CLI** and the SSH agent enabled in the app. Homebrew (macOS), apt (Debian/Ubuntu), or dnf (Fedora) installs the CLI |
+| macOS, Linux desktop | Desktop app installed and signed in; **Integrate with 1Password CLI** and the SSH agent enabled in the app. Homebrew (Apple Silicon), MacPorts (Intel macOS), apt (Debian/Ubuntu), or dnf (Fedora) installs the CLI |
 | Headless Linux | If you will enter a work account at init, run [`op account add`](https://developer.1password.com/docs/cli/get-started/) before the apply that reads secrets. The first apply installs the CLI when it is missing; add the account after that, then apply again. Otherwise leave the prompt blank |
 | WSL | [1Password CLI on Windows](https://developer.1password.com/docs/cli/get-started/) (e.g. `winget install AgileBits.1Password.CLI`); enable CLI integration in the Windows 1Password app (chezmoi uses `op.exe`, not Linux `op`, and does not install it) |
 
@@ -28,7 +28,7 @@ This installs `chezmoi` in `~/.local/bin` and clones [mnitchie/dotfiles](https:/
 | Headless Linux (no 1Password app) | Linux only, including Fedora | **n** on a desktop, including Fedora Workstation. **y** disables git commit signing and the 1Password SSH agent |
 | Windows user folder name | WSL only | Folder name under `C:\Users\` (spaces allowed) |
 
-Install the [1Password desktop app](https://1password.com/) separately on macOS; Git signing and SSH use it. Homebrew installs only the CLI. Bootstrap may prompt for sudo and, on macOS, Command Line Tools.
+Install the [1Password desktop app](https://1password.com/) separately on macOS; Git signing and SSH use it. Homebrew or MacPorts installs only the CLI. Bootstrap may prompt for sudo and, on macOS, Command Line Tools.
 
 ## Daily use
 
@@ -51,9 +51,9 @@ Use `chezmoi re-add` for plain files and `chezmoi edit` for templates. Do not ad
 
 ## Fish
 
-Bootstrap registers Homebrew’s fish in `/etc/shells` and sets it as the login shell (`dscl` on macOS, `chsh` on Linux/WSL). It uses `/opt/homebrew/bin/fish` on macOS and `/home/linuxbrew/.linuxbrew/bin/fish` on Linux/WSL.
+Bootstrap registers the package manager’s fish in `/etc/shells` and sets it as the login shell (`dscl` on macOS, `chsh` on Linux/WSL). It uses `/opt/homebrew/bin/fish` on Apple Silicon, `/opt/local/bin/fish` on Intel macOS, and `/home/linuxbrew/.linuxbrew/bin/fish` on Linux/WSL.
 
-Login shells prepend `~/.local/bin` and Homebrew’s `bin` and `sbin` to `PATH`. macOS system paths come from `path_helper`, since fish does not read `/etc/zprofile`. Non-login shells inherit PATH; fnm adds its Node.js directory during interactive startup. `reloadf` starts a non-login shell.
+Login shells prepend `~/.local/bin` and the package manager’s `bin` and `sbin` to `PATH`. macOS system paths come from `path_helper`, since fish does not read `/etc/zprofile`. Non-login shells inherit PATH; fnm adds its Node.js directory during interactive startup. `reloadf` starts a non-login shell.
 
 All shells set XDG directories, tool environment variables, and history paths. Interactive shells load Starship, zoxide (`cd`), fnm, fzf, and uv/op completions. Fish provides syntax highlighting and autosuggestions.
 
@@ -65,8 +65,11 @@ Fish loads `conf.d/*.fish` before `config.fish`. Interactive shells source unman
 
 Run `chezmoi cd`, then edit `home/.chezmoidata/packages.yaml`:
 
-- **`brews`** — all platforms (`brew bundle` in `run_onchange_before_10-install-packages.sh.tmpl`)
-- **`casks`** — macOS only (e.g. `font-jetbrains-mono-nerd-font`, `1password-cli`)
+- **`brews`** — all platforms (`brew bundle` in `run_onchange_before_10-install-packages.sh.tmpl`; `port install` on Intel macOS)
+- **`casks`** — Apple Silicon macOS only (e.g. `font-jetbrains-mono-nerd-font`, `1password-cli`)
+- **`portNames`** — Intel macOS port names for `brews` whose port is named differently (`awscli` is `py314-awscli2`). Check names at [ports.macports.org](https://ports.macports.org/)
+- **`portSelect`** — `port select --set` choices for ports that install versioned commands (`aws`)
+- **`ports`** — Intel macOS, in place of `casks` (`1password-cli`)
 - **`apt`** — Debian/Ubuntu packages before Homebrew on Linux and WSL
 - **`aptLinuxDesktop`** — non-headless Debian/Ubuntu only (e.g. `fontconfig`)
 - **`dnfGroups`** and **`dnf`** — Fedora packages before Homebrew. `dnfGroups` entries are `dnf group install` groups (Homebrew’s `development-tools`)
@@ -76,6 +79,14 @@ Run `chezmoi cd`, then edit `home/.chezmoidata/packages.yaml`:
 Debian-family Linux (`ID` of `debian` or `ubuntu`, or `ID_LIKE` containing `debian`) uses apt. Fedora (`ID=fedora`) uses dnf. Other distributions stop during apply. WSL keeps using apt when its `/etc/os-release` is Debian-family, and still uses Windows `op.exe`.
 
 Run `chezmoi apply` so the package script re-runs.
+
+## Intel Macs
+
+Homebrew treats Intel macOS as unsupported (Tier 3): it builds no new Intel bottles and plans to stop running on Intel Macs in September 2027 ([support tiers](https://docs.brew.sh/Support-Tiers#future-macos-support)). Intel Macs use [MacPorts](https://www.macports.org/) in `/opt/local` instead. chezmoi picks it from the CPU architecture; there is no prompt.
+
+The first apply installs Command Line Tools through `softwareupdate`, then the MacPorts installer pinned in `home/.chezmoidata/macports.yaml` (checksum-verified). Only macOS versions listed there are supported (Sequoia 15 and Tahoe 26). After that, the package script runs `port selfupdate`, and `sudo port selfupdate && sudo port upgrade outdated` updates everything. Ports without a prebuilt binary for your macOS build from source, which can take a while.
+
+The Nerd Font is downloaded into `~/Library/Fonts` (see Externals). Older font versions are not removed when the pin changes.
 
 ## CLI tools
 
@@ -177,7 +188,8 @@ From `home/.chezmoi.toml.tmpl`, written to `~/.config/chezmoi/chezmoi.toml` at `
 | Key | Meaning |
 | --- | --- |
 | `platform` | `darwin`, `linux`, or `wsl` |
-| `brewPrefix` | Homebrew prefix |
+| `packageManager` | `homebrew`, or `macports` on Intel macOS |
+| `packagePrefix` | Package manager prefix (`/opt/homebrew`, `/opt/local`, or `/home/linuxbrew/.linuxbrew`) |
 | `headless` | Linux without 1Password desktop app |
 | `work` | Work machine |
 | `workEmail` | Git email for work repos |
@@ -190,9 +202,10 @@ From `home/.chezmoidata/`, updated on `chezmoi apply` and `chezmoi update`:
 | --- | --- | --- |
 | `name`, `email` | `identity.yaml` | Personal git identity |
 | `signingKey`, `workSigningKey` | `identity.yaml` | SSH signing public keys |
-| `jetbrainsMonoNerdFont` | `fonts.yaml` | Linux desktop Nerd Font URL and checksum |
+| `jetbrainsMonoNerdFont` | `fonts.yaml` | Linux desktop and Intel macOS Nerd Font URL and checksum |
+| `macports` | `macports.yaml` | Pinned MacPorts installer version and per-macOS checksums |
 
-Older chezmoi configs may override identity data. Run `chezmoi update --init` to regenerate the config while keeping stored prompt answers.
+Older chezmoi configs may override identity data or lack newer keys (configs with `brewPrefix` predate `packagePrefix`, and apply fails with `map has no entry for key`). Run `chezmoi update --init` to regenerate the config while keeping stored prompt answers.
 
 Skip a whole directory on some machines by listing it in `home/.chezmoiignore` (patterns are templates even without `.tmpl`). Keep a single file's platform differences inside an `{{- if -}}` body so an empty render removes the file.
 
@@ -241,7 +254,8 @@ Starship needs a [Nerd Font](https://www.nerdfonts.com/). Use **JetBrainsMono Ne
 
 | Platform | Install | Set in terminal |
 | --- | --- | --- |
-| macOS | Cask `font-jetbrains-mono-nerd-font` | Terminal.app, iTerm2, etc. |
+| macOS (Apple Silicon) | Cask `font-jetbrains-mono-nerd-font` | Terminal.app, iTerm2, etc. |
+| macOS (Intel) | `~/Library/Fonts` via `.chezmoiexternal.toml.tmpl` (pin in `.chezmoidata/fonts.yaml`) | Terminal.app, iTerm2, etc. |
 | Linux desktop | `~/.local/share/fonts/JetBrainsMonoNerdFont` via `.chezmoiexternal.toml.tmpl` (pin in `.chezmoidata/fonts.yaml`) | Desktop terminal |
 | WSL | Windows: `winget install --id DEVCOM.JetBrainsMonoNerdFont` or [nerdfonts.com](https://www.nerdfonts.com/) | Windows Terminal → Font |
 | Linux server | — | Font on the SSH client machine |
@@ -252,7 +266,7 @@ Starship needs a [Nerd Font](https://www.nerdfonts.com/). Use **JetBrainsMono Ne
 
 - Third-party skills in `~/.agents/skills/`: `gh-stack`,
   `ponytail`, `pr-lens`, and `i-have-adhd`
-- Linux desktop Nerd Font, pinned in `home/.chezmoidata/fonts.yaml`
+- Linux desktop and Intel macOS Nerd Font, pinned in `home/.chezmoidata/fonts.yaml`
 
 ## Cursor CLI
 
@@ -283,4 +297,4 @@ Keep each user skill installed in one place.
 
 ## CI
 
-[Bootstrap CI](.github/workflows/bootstrap.yml) runs on pull requests and pushes to `main`, on Ubuntu and macOS. It installs the branch with non-interactive answers, checks apply idempotence, and smoke-tests fish, CLI tools, and the Git pager.
+[Bootstrap CI](.github/workflows/bootstrap.yml) runs on pull requests and pushes to `main`, on Ubuntu, Apple Silicon macOS, and Intel macOS (MacPorts). It installs the branch with non-interactive answers, checks apply idempotence, and smoke-tests fish, CLI tools, and the Git pager.

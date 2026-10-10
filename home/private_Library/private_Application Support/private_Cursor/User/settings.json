@@ -143,7 +143,7 @@
     "workbench.colorTheme": "CHC Dark",
     "terminal.integrated.profiles.osx": {
         "fish": {
-            "path": "/opt/homebrew/bin/fish"
+            "path": ["/opt/homebrew/bin/fish", "/opt/local/bin/fish"]
         }
     },
     "terminal.integrated.defaultProfile.osx": "fish"

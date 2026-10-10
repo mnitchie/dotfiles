@@ -1,7 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-brew="{{ .brewPrefix }}/bin/brew"
+{{ if eq .packageManager "macports" -}}
+port="{{ .packagePrefix }}/bin/port"
+if [[ ! -x "${port}" ]]; then
+  printf 'MacPorts is not installed at %s\n' "${port}" >&2
+  exit 1
+fi
+ports=(
+{{- range .brews }}
+  {{ index $.portNames . | default . | quote }}
+{{- end }}
+{{- range .ports }}
+  {{ . | quote }}
+{{- end }}
+)
+sudo "${port}" -N selfupdate
+sudo "${port}" -N install "${ports[@]}"
+{{ range .portSelect -}}
+sudo "${port}" select --set {{ .group | quote }} {{ .port | quote }}
+{{ end -}}
+{{ else -}}
+brew="{{ .packagePrefix }}/bin/brew"
 if [[ ! -x "${brew}" ]]; then
   printf 'Homebrew is not installed at %s\n' "${brew}" >&2
   exit 1
@@ -19,8 +39,9 @@ cask {{ . | quote }}
 {{ end -}}
 {{ end -}}
 EOF
+{{ end -}}
 {{ range .uvTools -}}
-"{{ $.brewPrefix }}/bin/uv" tool install{{ range .with }} --with {{ . | quote }}{{ end }} {{ .name | quote }}
+"{{ $.packagePrefix }}/bin/uv" tool install{{ range .with }} --with {{ . | quote }}{{ end }} {{ .name | quote }}
 {{ end -}}
 {{ if eq .platform "linux" -}}
 {{/* Fedora uses dnf. Debian-family (ID debian or ubuntu, or ID_LIKE containing debian) uses apt. */}}
