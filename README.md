@@ -1,6 +1,6 @@
 # Dotfiles
 
-Personal dotfiles managed with [chezmoi](https://www.chezmoi.io/). `chezmoi init --apply` installs Homebrew, CLI tools, and configuration under `$HOME`. Supports Apple Silicon macOS, Debian/Ubuntu Linux (desktop or headless), and WSL. Intel Macs are not supported.
+Personal dotfiles managed with [chezmoi](https://www.chezmoi.io/). `chezmoi init --apply` installs Homebrew, CLI tools, and configuration under `$HOME`. Supports Apple Silicon macOS, Debian/Ubuntu and Fedora Linux (desktop or headless), and WSL. Intel Macs are not supported.
 
 ## New machine
 
@@ -8,7 +8,7 @@ For work secrets, set up 1Password first. Leave the work account prompt blank to
 
 | Platform | 1Password before the apply that reads secrets |
 | --- | --- |
-| macOS, Linux desktop | Desktop app installed and signed in; **Integrate with 1Password CLI** and the SSH agent enabled in the app. Homebrew (macOS) or apt (Linux) installs the CLI |
+| macOS, Linux desktop | Desktop app installed and signed in; **Integrate with 1Password CLI** and the SSH agent enabled in the app. Homebrew (macOS), apt (Debian/Ubuntu), or dnf (Fedora) installs the CLI |
 | Headless Linux | If you will enter a work account at init, run [`op account add`](https://developer.1password.com/docs/cli/get-started/) before the apply that reads secrets. The first apply installs the CLI when it is missing; add the account after that, then apply again. Otherwise leave the prompt blank |
 | WSL | [1Password CLI on Windows](https://developer.1password.com/docs/cli/get-started/) (e.g. `winget install AgileBits.1Password.CLI`); enable CLI integration in the Windows 1Password app (chezmoi uses `op.exe`, not Linux `op`, and does not install it) |
 
@@ -25,7 +25,7 @@ This installs `chezmoi` in `~/.local/bin` and clones [mnitchie/dotfiles](https:/
 | Work machine | always | |
 | Work email | if work | |
 | Work 1Password account sign-in address (blank to skip work secrets) | if work | Example: `employee.1password.com` |
-| Headless Linux (no 1Password app) | Linux only | **y** disables git commit signing and the 1Password SSH agent |
+| Headless Linux (no 1Password app) | Linux only, including Fedora | **n** on a desktop, including Fedora Workstation. **y** disables git commit signing and the 1Password SSH agent |
 | Windows user folder name | WSL only | Folder name under `C:\Users\` (spaces allowed) |
 
 Install the [1Password desktop app](https://1password.com/) separately on macOS; Git signing and SSH use it. Homebrew installs only the CLI. Bootstrap may prompt for sudo and, on macOS, Command Line Tools.
@@ -68,8 +68,12 @@ Run `chezmoi cd`, then edit `home/.chezmoidata/packages.yaml`:
 - **`brews`** — all platforms (`brew bundle` in `run_onchange_before_10-install-packages.sh.tmpl`)
 - **`casks`** — macOS only (e.g. `font-jetbrains-mono-nerd-font`, `1password-cli`)
 - **`apt`** — Debian/Ubuntu packages before Homebrew on Linux and WSL
-- **`aptLinuxDesktop`** — non-headless Linux only (e.g. `fontconfig`)
+- **`aptLinuxDesktop`** — non-headless Debian/Ubuntu only (e.g. `fontconfig`)
+- **`dnfGroups`** and **`dnf`** — Fedora packages before Homebrew. `dnfGroups` entries are `dnf group install` groups (Homebrew’s `development-tools`)
+- **`dnfLinuxDesktop`** — non-headless Fedora only (e.g. `fontconfig`)
 - **`uvTools`** — `uv tool install` after Homebrew. `with` packages install into that tool (`llm` with `llm-ollama`). Homebrew’s `llm` formula is not used
+
+Debian-family Linux (`ID` of `debian` or `ubuntu`, or `ID_LIKE` containing `debian`) uses apt. Fedora (`ID=fedora`) uses dnf. Other distributions stop during apply. WSL keeps using apt when its `/etc/os-release` is Debian-family, and still uses Windows `op.exe`.
 
 Run `chezmoi apply` so the package script re-runs.
 

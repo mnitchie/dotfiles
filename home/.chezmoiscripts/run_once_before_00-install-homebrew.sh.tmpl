@@ -1,6 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
-{{ if or (eq .platform "linux") (eq .platform "wsl") }}
+{{ if or (eq .platform "linux") (eq .platform "wsl") -}}
+{{/* Fedora uses dnf. Debian-family (ID debian or ubuntu, or ID_LIKE containing debian) uses apt. */}}
+{{- $id := .chezmoi.osRelease.id -}}
+{{- $like := "" -}}
+{{- if hasKey .chezmoi.osRelease "idLike" -}}
+{{-   $like = .chezmoi.osRelease.idLike -}}
+{{- end }}
+{{   if eq $id "fedora" -}}
+# https://docs.brew.sh/Homebrew-on-Linux
+sudo /usr/bin/dnf group install -y{{- range .dnfGroups }} {{ . | quote }}{{ end }}
+dnf_packages=(
+{{- range .dnf }}
+  {{ . | quote }}
+{{- end }}
+{{- if and (eq .platform "linux") (not .headless) }}
+{{- range .dnfLinuxDesktop }}
+  {{ . | quote }}
+{{- end }}
+{{- end }}
+)
+sudo /usr/bin/dnf install -y "${dnf_packages[@]}"
+{{   else if or (eq $id "debian") (eq $id "ubuntu") ($like | contains "debian") -}}
 apt_packages=(
 {{- range .apt }}
   {{ . | quote }}
@@ -13,8 +34,10 @@ apt_packages=(
 )
 sudo DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get update
 sudo DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get install -y "${apt_packages[@]}"
-
-{{ end -}}
+{{   else -}}
+{{-     fail (printf "unsupported Linux distribution %q" $id) -}}
+{{   end }}
+{{ end }}
 if [[ ! -x "{{ .brewPrefix }}/bin/brew" ]]; then
   # bash -c "$(curl ...)" exits 0 when curl fails, and chezmoi would record this run_once script as done.
   installer="$(/usr/bin/mktemp)"
