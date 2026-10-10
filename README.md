@@ -249,4 +249,4 @@ Skills install to `~/.agents/skills/` (plural `.agents`). Stitch's MCP entry rea
 
 ## CI
 
-[Bootstrap CI](.github/workflows/bootstrap.yml) installs each PR on Ubuntu, Apple Silicon macOS, and Intel macOS. It then checks that a second apply changes nothing, and smoke-tests fish and the tools.
+[Bootstrap CI](.github/workflows/bootstrap.yml) installs each PR on Ubuntu and Apple Silicon macOS. Intel macOS is not tested in CI. It then checks that a second apply changes nothing, and smoke-tests fish and the tools.
