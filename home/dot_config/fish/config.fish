@@ -29,6 +29,11 @@ if status is-interactive
         starship init fish | source
     end
 
+    # 1Password shell plugins (created by `op plugin init`, e.g. the gh alias).
+    if test -r ~/.config/op/plugins.sh
+        source ~/.config/op/plugins.sh
+    end
+
     # Unmanaged local overrides.
     if test -r "$__fish_config_dir/local.fish"
         source "$__fish_config_dir/local.fish"

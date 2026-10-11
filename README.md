@@ -39,6 +39,8 @@ Add `--branch <name>` after `init` to test a branch. Expect sudo prompts, and on
 
 If `op` wasn't installed yet, secrets are skipped on the first run. Run `chezmoi apply` again after signing in.
 
+**4. Enable the `gh` shell plugin** (macOS, Linux desktop): `chezmoi apply` reminds you until you run `op plugin init gh`. It's interactive, so it isn't automated. `config.fish` already sources the `plugins.sh` it creates; don't append the source line it suggests.
+
 ## Daily use
 
 | Command | Purpose |
