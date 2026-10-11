@@ -1,12 +1,12 @@
-{{- if or (eq .platform "darwin") (and (eq .platform "linux") (not .headless)) -}}
+{{- /* Renders empty (so chezmoi skips it and `chezmoi status` stays clean) once plugins.sh exists or on CI. */ -}}
+{{- $pluginsFile := joinPath .chezmoi.homeDir ".config/op/plugins.sh" -}}
+{{- if and (or (eq .platform "darwin") (and (eq .platform "linux") (not .headless))) (lookPath "op") (lookPath "gh") (not (stat $pluginsFile)) (not (env "CI")) -}}
 #!/usr/bin/env bash
 set -euo pipefail
 
 # `op plugin init` asks which credential to use and needs the desktop app to approve it, so it can't run unattended.
-if command -v op >/dev/null && command -v gh >/dev/null && [[ ! -r "${HOME}/.config/op/plugins.sh" ]]; then
-  printf '\nNext step: run `op plugin init gh` to have 1Password supply your GitHub CLI credentials.\n' >&2
-  printf 'Skip the suggested `echo "source ..." >> config.fish` line: config.fish already sources plugins.sh.\n' >&2
-fi
+printf '\nNext step: run `op plugin init gh` to have 1Password supply your GitHub CLI credentials.\n' >&2
+printf 'Skip the suggested `echo "source ..." >> config.fish` line: config.fish already sources plugins.sh.\n' >&2
 {{- /* newline: a break after end would also be emitted when this renders empty */ -}}
 {{- println -}}
 {{- end -}}
