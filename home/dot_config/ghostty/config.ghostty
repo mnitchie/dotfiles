@@ -4,3 +4,6 @@
 
 shell-integration-features = ssh-terminfo,ssh-env
 theme = Dark Pastel
+
+# Quick terminal
+keybind = global:cmd+grave_accent=toggle_quick_terminal
