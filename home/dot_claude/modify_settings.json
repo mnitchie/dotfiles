@@ -1,6 +1,8 @@
 #!/bin/sh
-# Merge the status line into Claude Code's settings without clobbering other keys.
+# Merge the model, effort and status line into Claude Code's settings without clobbering other keys.
 exec jq -s '(.[0] // {}) * {
+  "model": "claude-sonnet-5-5",
+  "effortLevel": "high",
   "statusLine": {
     "type": "command",
     "command": "~/.claude/statusline-command.sh"
