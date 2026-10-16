@@ -57,6 +57,7 @@
     ],
     "gitlens.telemetry.enabled": false,
     "python.autoComplete.extraPaths": [],
+    "python.terminal.activateEnvironment": false,
     "python.testing.autoTestDiscoverOnSaveEnabled": true,
     "remote.autoForwardPortsSource": "hybrid",
     "window.zoomLevel": 1,

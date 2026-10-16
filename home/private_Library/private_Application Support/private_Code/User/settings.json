@@ -72,6 +72,7 @@
     "python.analysis.typeCheckingMode": "basic",
     "python.autoComplete.extraPaths": [],
     "python.languageServer": "Pylance",
+    "python.terminal.activateEnvironment": false,
     "python.testing.autoTestDiscoverOnSaveEnabled": true,
     "remote.autoForwardPortsSource": "hybrid",
     "window.zoomLevel": 1,
