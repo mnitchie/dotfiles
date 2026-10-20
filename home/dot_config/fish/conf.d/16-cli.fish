@@ -79,6 +79,7 @@ if status is-interactive
         # Stay quiet when the abbreviation itself produced the command.
         if test -n "$best_name"; and not contains -- $best_expansion $_abbr_expanded
             _nudge "$best_name: use the alias instead of '$best_expansion'"
+            printf '\a'
         end
         set -e _abbr_expanded
     end

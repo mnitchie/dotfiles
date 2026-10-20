@@ -5,5 +5,8 @@
 shell-integration-features = ssh-terminfo,ssh-env
 theme = Dark Pastel
 
+# Play the macOS alert sound on bell (used by the fish alias reminder), keeping the default attention and title cues
+bell-features = system,attention,title
+
 # Quick terminal
 keybind = global:cmd+grave_accent=toggle_quick_terminal
