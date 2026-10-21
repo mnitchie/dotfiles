@@ -1,0 +1,4 @@
+{{- /* Regenerated from the installed uv on every apply; renders empty (so chezmoi skips it) when uv is missing. */ -}}
+{{- if lookPath "uv" -}}
+{{ output "uv" "generate-shell-completion" "fish" }}
+{{- end -}}

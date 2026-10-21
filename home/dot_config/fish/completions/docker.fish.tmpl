@@ -1,0 +1,4 @@
+{{- /* Regenerated from the installed docker on every apply; renders empty (so chezmoi skips it) when docker is missing. */ -}}
+{{- if lookPath "docker" -}}
+{{ output "docker" "completion" "fish" }}
+{{- end -}}

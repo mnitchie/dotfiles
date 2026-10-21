@@ -85,7 +85,7 @@ Homebrew [no longer builds Intel packages](https://docs.brew.sh/Support-Tiers#fu
 
 ## CLI tools
 
-In interactive fish, `cat` is `bat`, `ls` is `eza`, and `cd` is zoxide. `df`, `du`, `find`, and `grep` suggest `duf`, `dust`, `fd`, and `rg`. Starship, fzf, fnm, and uv/op completions load automatically. `history` shows timestamps.
+In interactive fish, `cat` is `bat`, `ls` is `eza`, and `cd` is zoxide. `df`, `du`, `find`, and `grep` suggest `duf`, `dust`, `fd`, and `rg`. Starship, fzf, and fnm load automatically. Completions for docker, uv, and op are regenerated from the installed tools on each `chezmoi apply`. `history` shows timestamps.
 
 ### bat
 
