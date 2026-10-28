@@ -1,0 +1,4 @@
+{{- /* aws ships aws_completer instead of a fish script; renders empty (so chezmoi skips it) when aws_completer is missing. */ -}}
+{{- if lookPath "aws_completer" -}}
+complete --command aws --no-files --arguments '(begin; set --local --export COMP_SHELL fish; set --local --export COMP_LINE (commandline); aws_completer | sed \'s/ $//\'; end)'
+{{ end -}}
