@@ -40,6 +40,11 @@ cask {{ . | quote }}
 {{ end -}}
 EOF
 {{ end -}}
+{{ if .uvTools -}}
+# uv warns when its bin dir is not on PATH. The bootstrap shell is often zsh
+# with no ~/.local/bin entry. Fish adds it in conf.d/00-env.fish.
+export PATH="${HOME}/.local/bin:${PATH}"
+{{ end -}}
 {{ range .uvTools -}}
 "{{ $.packagePrefix }}/bin/uv" tool install{{ range .with }} --with {{ . | quote }}{{ end }} {{ .name | quote }}
 {{ end -}}
